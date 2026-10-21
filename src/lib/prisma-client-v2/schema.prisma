@@ -1,0 +1,465 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/lib/prisma-client-v2"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String
+  avatar    String?
+  phone     String?
+  bio       String?
+  role      String   @default("member") // "member" | "admin" | "owner"
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  bookings       Booking[]
+  reviews        Review[]
+  rentalRequests RentalRequest[]
+}
+
+model RentalCompany {
+  id        String   @id @default(cuid())
+  name      String   @default("RentHub Enterprise Rentals")
+  legalName String?  @default("RentHub Co., Ltd.")
+  currency  String   @default("USD")
+  timezone  String   @default("Asia/Phnom_Penh")
+  phone     String?  @default("+855 23 888 999")
+  email     String?  @default("support@renthub.app")
+  address   String?  @default("Building 42, Norodom Blvd, Phnom Penh, Cambodia")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  locations      AssetLocation[]
+  listings       AssetListing[]
+  auditEvents    AssetAuditEvent[]
+  rentalRequests RentalRequest[]
+}
+
+model AssetCategory {
+  id               String   @id @default(cuid())
+  name             String
+  slug             String   @unique
+  shortDescription String?
+  description      String?
+  imageUrl         String?
+  iconName         String?  @default("Folder")
+  color            String?  @default("#10B981")
+  parentId         String?
+  displayOrder     Int      @default(0)
+  status           String   @default("ACTIVE") // "ACTIVE" | "INACTIVE" | "ARCHIVED"
+  metaTitle        String?
+  metaDescription  String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  parent   AssetCategory?  @relation("CategoryHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
+  children AssetCategory[] @relation("CategoryHierarchy")
+  listings AssetListing[]
+}
+
+model AssetBrand {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  slug      String   @unique
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  listings AssetListing[]
+}
+
+model AssetLocation {
+  id              String   @id @default(cuid())
+  companyId       String
+  name            String
+  code            String   @unique
+  address         String
+  city            String
+  timezone        String   @default("Asia/Phnom_Penh")
+  isPickupDefault Boolean  @default(true)
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  company         RentalCompany         @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  units           AssetUnit[]
+  locationOptions AssetLocationOption[]
+  pickupRequests  RentalRequest[]       @relation("RequestPickupLoc")
+  returnRequests  RentalRequest[]       @relation("RequestReturnLoc")
+}
+
+model AssetListing {
+  id               String    @id @default(cuid())
+  companyId        String
+  code             String    @unique
+  name             String
+  slug             String    @unique
+  categoryId       String
+  brandId          String?
+  model            String?
+  shortDescription String
+  description      String?
+  specifications   String? // JSON object string: {"RAM":"16GB", "Storage":"512GB SSD"}
+  trackingMode     String    @default("SERIALIZED") // "SERIALIZED" | "QUANTITY"
+  conditionNote    String?
+  coverImage       String
+  images           String    @default("[]") // JSON array string of image URLs
+  allowDelivery    Boolean   @default(true)
+  deliveryFee      Float     @default(0)
+  visibility       String    @default("DRAFT") // "DRAFT" | "PUBLISHED" | "UNPUBLISHED" | "ARCHIVED"
+  publishedAt      DateTime?
+  version          Int       @default(1)
+  rating           Float     @default(0)
+  reviewCount      Int       @default(0)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  company          RentalCompany          @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  category         AssetCategory          @relation(fields: [categoryId], references: [id])
+  brand            AssetBrand?            @relation(fields: [brandId], references: [id])
+  units            AssetUnit[]
+  rates            AssetRate[]
+  rentalPolicy     AssetRentalPolicy?
+  locationOptions  AssetLocationOption[]
+  blockedIntervals AssetBlockedInterval[]
+  auditEvents      AssetAuditEvent[]
+  bookings         Booking[]
+  reviews          Review[]
+  rentalRequests   RentalRequest[]
+  inventoryHolds   RentalInventoryHold[]
+}
+
+model AssetLocationOption {
+  id            String  @id @default(cuid())
+  listingId     String
+  locationId    String
+  pickupEnabled Boolean @default(true)
+  returnEnabled Boolean @default(true)
+
+  listing  AssetListing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  location AssetLocation @relation(fields: [locationId], references: [id], onDelete: Cascade)
+
+  @@unique([listingId, locationId])
+}
+
+model AssetUnit {
+  id              String    @id @default(cuid())
+  listingId       String
+  assetTag        String    @unique // e.g. "TO-LAP-0001"
+  serialNumber    String? // e.g. "SN-ABC-12345"
+  locationId      String
+  baseStatus      String    @default("ACTIVE") // "ACTIVE" | "MAINTENANCE" | "RETIRED" | "LOST"
+  conditionGrade  String    @default("GOOD") // "NEW" | "EXCELLENT" | "GOOD" | "FAIR" | "DAMAGED"
+  accessories     String? // "Power Adapter, Sleeve, Mouse"
+  conditionPhotos String? // JSON array of URLs
+  purchaseDate    DateTime?
+  purchaseCost    Float? // Internal only, never exposed to public
+  notes           String? // Internal staff notes
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  listing          AssetListing           @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  location         AssetLocation          @relation(fields: [locationId], references: [id])
+  blockedIntervals AssetBlockedInterval[]
+  bookings         Booking[]
+  holdUnits        RentalHoldUnit[]
+}
+
+model AssetRate {
+  id            String    @id @default(cuid())
+  listingId     String
+  currency      String    @default("USD") // "USD" | "KHR"
+  billingUnit   String    @default("DAY") // "HOUR" | "DAY" | "WEEK" | "MONTH"
+  rateAmount    Float
+  effectiveFrom DateTime?
+  effectiveTo   DateTime?
+  isPrimary     Boolean   @default(true)
+
+  listing AssetListing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+}
+
+model AssetRentalPolicy {
+  id                       String  @id @default(cuid())
+  listingId                String  @unique
+  securityDeposit          Float   @default(0)
+  minimumDuration          Int     @default(1)
+  minimumDurationUnit      String  @default("DAY")
+  maximumDuration          Int?
+  lateFeeAmount            Float   @default(0)
+  lateFeeUnit              String  @default("DAY")
+  lateGraceMinutes         Int     @default(30)
+  minAdvanceNoticeMinutes  Int     @default(120) // e.g. 2 hours lead time
+  preparationBufferMinutes Int     @default(120) // 2 hours prep
+  returnBufferMinutes      Int     @default(120) // 2 hours inspection & turnaround
+  allowedPickupWeekdays    String? @default("[\"MON\",\"TUE\",\"WED\",\"THU\",\"FRI\",\"SAT\",\"SUN\"]")
+  termsTemplate            String?
+
+  listing AssetListing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+}
+
+model AssetBlockedInterval {
+  id        String   @id @default(cuid())
+  listingId String
+  unitId    String? // Null means entire listing is blocked; otherwise specific unit
+  startAt   DateTime
+  endAt     DateTime
+  reason    String // e.g. "Scheduled Maintenance", "Annual Calibration"
+  notes     String?
+  createdBy String?  @default("Admin")
+  createdAt DateTime @default(now())
+
+  listing AssetListing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  unit    AssetUnit?   @relation(fields: [unitId], references: [id], onDelete: Cascade)
+}
+
+model AssetAuditEvent {
+  id         String   @id @default(cuid())
+  companyId  String?
+  listingId  String?
+  entityType String // "LISTING" | "UNIT" | "RATE" | "POLICY" | "CATEGORY" | "LOCATION"
+  entityId   String
+  actorName  String   @default("Admin")
+  action     String // "CREATE" | "UPDATE" | "PUBLISH" | "UNPUBLISH" | "ARCHIVE" | "MAINTENANCE"
+  beforeJson String?
+  afterJson  String?
+  createdAt  DateTime @default(now())
+
+  company RentalCompany? @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  listing AssetListing?  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+}
+
+model Booking {
+  id         String   @id @default(cuid())
+  listingId  String
+  unitId     String?
+  userId     String
+  startDate  DateTime
+  endDate    DateTime
+  totalPrice Float
+  status     String   @default("pending") // "pending" | "confirmed" | "cancelled" | "completed"
+  createdAt  DateTime @default(now())
+
+  listing AssetListing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  unit    AssetUnit?   @relation(fields: [unitId], references: [id], onDelete: SetNull)
+  user    User         @relation(fields: [userId], references: [id])
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  listingId String
+  userId    String
+  rating    Float
+  comment   String
+  createdAt DateTime @default(now())
+
+  listing AssetListing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  user    User         @relation(fields: [userId], references: [id])
+}
+
+// ============================================================================
+// STEP 03: RENTAL REQUEST & COMMERCIAL SNAPSHOT MODELS
+// ============================================================================
+
+model RentalRequest {
+  id        String @id @default(cuid())
+  requestNo String @unique // e.g. "REQ-2026-000001"
+  renterId  String
+  listingId String
+  companyId String
+  status    String @default("PENDING_APPROVAL")
+  // Statuses: "DRAFT" | "PENDING_APPROVAL" | "APPROVED_AWAITING_PAYMENT" | "REJECTED" | "CANCELLED_BY_RENTER"
+
+  // Interval & Quantity
+  startAt    DateTime
+  endAt      DateTime
+  rentalDays Int
+  quantity   Int      @default(1)
+
+  // Fulfillment
+  fulfillment      String  @default("PICKUP") // "PICKUP" | "DELIVERY"
+  pickupLocationId String?
+  returnLocationId String?
+
+  // Contact Information
+  contactName      String
+  contactPhone     String
+  contactEmail     String
+  organizationName String?
+
+  // Customer Notes & Preferences
+  customerNotes String?
+
+  // Concurrency & Payment deadline
+  version      Int       @default(1)
+  paymentDueAt DateTime?
+
+  // Idempotency & Audit
+  idempotencyKey String?
+  quoteToken     String?
+  submittedAt    DateTime @default(now())
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relationships
+  renter            User                     @relation(fields: [renterId], references: [id])
+  listing           AssetListing             @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  company           RentalCompany            @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  pickupLocation    AssetLocation?           @relation("RequestPickupLoc", fields: [pickupLocationId], references: [id])
+  returnLocation    AssetLocation?           @relation("RequestReturnLoc", fields: [returnLocationId], references: [id])
+  quoteSnapshot     RentalQuoteSnapshot?
+  deliveryAddress   RentalRequestAddress?
+  termsAcceptance   RentalTermsAcceptance?
+  events            RentalRequestEvent[]
+  inventoryHold     RentalInventoryHold?
+  approvalDecisions RentalApprovalDecision[]
+  changeProposals   RentalChangeProposal[]
+
+  @@index([renterId, status])
+  @@index([companyId, status])
+  @@index([requestNo])
+}
+
+model RentalQuoteSnapshot {
+  id                    String   @id @default(cuid())
+  requestId             String   @unique
+  currency              String   @default("USD")
+  billingUnit           String   @default("DAY")
+  unitRate              Float
+  rentalDays            Int
+  quantity              Int      @default(1)
+  rentalSubtotal        Float
+  securityDeposit       Float    @default(0)
+  deliveryFee           Float    @default(0)
+  estimatedTax          Float    @default(0)
+  totalPayable          Float
+  contingentLateFee     Float    @default(0)
+  contingentLateFeeUnit String   @default("DAY")
+  capturedAt            DateTime @default(now())
+
+  request RentalRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+}
+
+model RentalRequestAddress {
+  id             String  @id @default(cuid())
+  requestId      String  @unique
+  recipientName  String
+  recipientPhone String
+  addressLine1   String
+  addressLine2   String?
+  city           String
+  postalCode     String?
+  deliveryNotes  String?
+
+  request RentalRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+}
+
+model RentalTermsAcceptance {
+  id             String   @id @default(cuid())
+  requestId      String   @unique
+  termsVersionId String   @default("rental-terms-2026.1")
+  acceptedAt     DateTime @default(now())
+  actorId        String
+  ipAddress      String?
+
+  request RentalRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+}
+
+model RentalRequestEvent {
+  id         String   @id @default(cuid())
+  requestId  String
+  actorId    String
+  actorName  String
+  actorType  String   @default("RENTER") // "RENTER" | "ADMIN" | "SYSTEM"
+  action     String // "SUBMIT" | "CANCEL" | "APPROVE" | "REJECT"
+  fromStatus String?
+  toStatus   String
+  reason     String?
+  createdAt  DateTime @default(now())
+
+  request RentalRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+
+  @@index([requestId])
+}
+
+// ============================================================================
+// STEP 04: APPROVAL DECISION, INVENTORY HOLD & CHANGE PROPOSAL MODELS
+// ============================================================================
+
+model RentalApprovalDecision {
+  id             String   @id @default(cuid())
+  requestId      String
+  reviewerId     String
+  reviewerName   String   @default("Admin")
+  decision       String // "APPROVE" | "REJECT" | "PROPOSE_CHANGES"
+  reasonCode     String? // "INVENTORY_UNAVAILABLE" | "MAINTENANCE_CONFLICT" | "POLICY_VIOLATION" | "APPROVED_STANDARD" | etc.
+  publicReason   String? // Visible to customer
+  internalNotes  String? // Internal admin notes
+  decidedAt      DateTime @default(now())
+  requestVersion Int      @default(1)
+
+  request RentalRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+
+  @@index([requestId])
+}
+
+model RentalInventoryHold {
+  id        String   @id @default(cuid())
+  requestId String   @unique
+  listingId String
+  quantity  Int      @default(1)
+  startAt   DateTime
+  endAt     DateTime
+  expiresAt DateTime
+  status    String   @default("ACTIVE") // "ACTIVE" | "CONSUMED" | "EXPIRED" | "RELEASED"
+  createdBy String   @default("Admin")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  request RentalRequest    @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  listing AssetListing     @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  units   RentalHoldUnit[]
+
+  @@index([listingId, status])
+  @@index([expiresAt, status])
+}
+
+model RentalHoldUnit {
+  id     String @id @default(cuid())
+  holdId String
+  unitId String
+
+  hold RentalInventoryHold @relation(fields: [holdId], references: [id], onDelete: Cascade)
+  unit AssetUnit           @relation(fields: [unitId], references: [id], onDelete: Cascade)
+
+  @@unique([holdId, unitId])
+}
+
+model RentalChangeProposal {
+  id               String    @id @default(cuid())
+  requestId        String
+  proposedStartAt  DateTime?
+  proposedEndAt    DateTime?
+  proposedQuantity Int?
+  proposedRate     Float?
+  proposedSubtotal Float?
+  proposedDeposit  Float?
+  proposedTotal    Float?
+  reason           String
+  status           String    @default("PENDING_RENTER_RESPONSE") // "PENDING_RENTER_RESPONSE" | "ACCEPTED" | "DECLINED"
+  expiresAt        DateTime
+  createdAt        DateTime  @default(now())
+
+  request RentalRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+
+  @@index([requestId])
+}
