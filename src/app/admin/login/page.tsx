@@ -2,12 +2,13 @@
 
 import { useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Eye, EyeOff, Boxes, Lock } from 'lucide-react'
+import { Eye, EyeOff, Boxes, Lock, Clock } from 'lucide-react'
 
 export default function AdminLoginPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const from = searchParams.get('from') || '/admin'
+  const isExpired = searchParams.get('expired') === '1'
 
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
@@ -25,11 +26,12 @@ export default function AdminLoginPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password }),
       })
+      const data = await res.json()
       if (res.ok) {
         router.push(from)
         router.refresh()
       } else {
-        setError('Invalid username or password. Please try again.')
+        setError(data.error || 'Invalid username or password. Please try again.')
       }
     } catch {
       setError('Something went wrong. Please try again.')
@@ -96,9 +98,16 @@ export default function AdminLoginPage() {
           </div>
 
           <div className="mb-8">
-            <h1 className="text-4xl font-extrabold text-white tracking-tight">Login</h1>
-            <p className="text-sm text-white/50 mt-1.5">Sign in to your admin account</p>
+            <h1 className="text-4xl font-extrabold text-white tracking-tight">Admin Console</h1>
+            <p className="text-sm text-white/50 mt-1.5">Sign in with authorized administrator credentials</p>
           </div>
+
+          {isExpired && !error && (
+            <div className="mb-5 text-xs text-amber-200 bg-amber-500/15 border border-amber-400/30 rounded-xl px-4 py-3 flex items-center gap-2.5">
+              <Clock className="h-4 w-4 shrink-0 text-amber-300" />
+              <span>Your admin session has expired. Please log in again to continue.</span>
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} className="space-y-5">
             {/* Username */}
@@ -174,12 +183,19 @@ export default function AdminLoginPage() {
           </form>
 
           {/* Credentials hint */}
-          <div className="mt-10 pt-6 border-t border-white/10 text-center space-y-1.5">
-            <p className="text-[12px] text-white/30">
-              Default credentials
-            </p>
-            <p className="text-[13px] text-white/50 font-mono">
-              admin <span className="text-white/25">/</span> admin123
+          <div className="mt-8 pt-5 border-t border-white/10 text-center space-y-2.5">
+            <button
+              type="button"
+              onClick={() => {
+                setUsername('admin@renthub.app')
+                setPassword('AdminPassword123!')
+              }}
+              className="py-1.5 px-3 rounded-lg bg-white/10 hover:bg-white/15 text-white/80 hover:text-white text-xs font-medium transition border border-white/10"
+            >
+              Fill Admin Demo Credentials
+            </button>
+            <p className="text-[12px] text-white/40 font-mono">
+              admin@renthub.app / AdminPassword123!
             </p>
           </div>
         </div>

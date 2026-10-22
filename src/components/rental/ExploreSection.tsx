@@ -29,6 +29,7 @@ export function ExploreSection() {
     queryKey: ['categories'],
     queryFn: async () => {
       const r = await fetch('/api/categories')
+      if (!r.ok) throw new Error('Failed to fetch categories')
       return r.json()
     },
   })
@@ -48,6 +49,7 @@ export function ExploreSection() {
     queryKey: ['assets', queryString],
     queryFn: async () => {
       const r = await fetch(`/api/assets?${queryString}`)
+      if (!r.ok) throw new Error('Failed to fetch assets')
       return r.json()
     },
   })

@@ -1,8 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import {
   LayoutDashboard,
   Package,
@@ -40,6 +40,37 @@ const generalLinks = [
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
+  const router = useRouter()
+  const [adminUser, setAdminUser] = useState<{ name: string; email: string } | null>(null)
+
+  useEffect(() => {
+    fetch('/api/admin/me')
+      .then((res) => {
+        if (res.status === 401) {
+          res.json().then((d) => {
+            if (d?.error === 'SESSION_EXPIRED') {
+              router.push('/admin/login?expired=1')
+            }
+          })
+          return null
+        }
+        return res.json()
+      })
+      .then((data) => {
+        if (data?.user) {
+          setAdminUser({ name: data.user.name, email: data.user.email })
+        }
+      })
+      .catch(() => {})
+  }, [router])
+
+  const handleAdminLogout = async () => {
+    try {
+      await fetch('/api/admin/login', { method: 'DELETE' })
+    } catch {}
+    router.push('/admin/login')
+    router.refresh()
+  }
 
   // auto-open if currently inside any asset sub-route
   const assetGroupActive = assetSubLinks.some((l) => pathname.startsWith(l.href))
@@ -277,15 +308,30 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               Customer Portal
             </Link>
 
-            {/* User profile */}
-            <div className="flex items-center gap-2.5">
-              <div className="h-9 w-9 rounded-full bg-[#0d4a2e] text-white flex items-center justify-center text-xs font-bold shadow">
-                VC
+            {/* User profile & Logout */}
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2.5">
+                <div className="h-9 w-9 rounded-full bg-[#0d4a2e] text-white flex items-center justify-center text-xs font-bold shadow">
+                  {(adminUser?.name || 'A').charAt(0)}
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-slate-800 leading-none">
+                    {adminUser?.name || 'Admin'}
+                  </p>
+                  <p className="text-[11px] text-slate-400 mt-0.5">
+                    {adminUser?.email || 'admin@renthub.app'}
+                  </p>
+                </div>
               </div>
-              <div>
-                <p className="text-sm font-semibold text-slate-800 leading-none">Vannak Chen</p>
-                <p className="text-[11px] text-slate-400 mt-0.5">vannak@renthub.io</p>
-              </div>
+              <button
+                type="button"
+                onClick={handleAdminLogout}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-500 hover:text-red-600 hover:bg-red-50 border border-slate-200 transition"
+                title="Sign out of Admin Console"
+              >
+                <LogOut className="h-3.5 w-3.5" />
+                <span>Sign Out</span>
+              </button>
             </div>
           </div>
 

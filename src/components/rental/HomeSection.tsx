@@ -48,6 +48,7 @@ export function HomeSection() {
     queryKey: ['categories'],
     queryFn: async () => {
       const r = await fetch('/api/categories')
+      if (!r.ok) throw new Error('Failed to fetch categories')
       return r.json()
     },
   })
@@ -61,6 +62,7 @@ export function HomeSection() {
       if (selectedCategory) params.set('category', selectedCategory)
       if (appliedSearch) params.set('q', appliedSearch)
       const r = await fetch(`/api/assets?${params.toString()}`)
+      if (!r.ok) throw new Error('Failed to fetch assets')
       return r.json()
     },
   })
@@ -75,7 +77,8 @@ export function HomeSection() {
     setAppliedSearch('')
   }
 
-  const focusedCategoryObj = categories.find((c: any) => c.slug === selectedCategory)
+  const categoryList = Array.isArray(categories) ? categories : []
+  const focusedCategoryObj = categoryList.find((c: any) => c.slug === selectedCategory)
 
   return (
     <div>

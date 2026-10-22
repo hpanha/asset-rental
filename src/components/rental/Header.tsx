@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { LayoutGrid, Menu, X, Compass, ClipboardList, LogIn, LogOut, User } from 'lucide-react'
+import { LayoutGrid, Menu, X, Compass, ClipboardList, LogIn, LogOut, User, Shield } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import {
@@ -34,6 +34,13 @@ export function Header() {
     queryKey: ['me'],
     queryFn: async () => {
       const r = await fetch('/api/me')
+      if (r.status === 401) {
+        const body = await r.json().catch(() => ({}))
+        if (body?.error === 'SESSION_EXPIRED') {
+          toast.error('Your session has expired. Please sign in again.')
+        }
+        return null
+      }
       if (!r.ok) return null
       return r.json()
     },
@@ -129,6 +136,14 @@ export function Header() {
                       <span>Active Rentals</span>
                     </Link>
                   </DropdownMenuItem>
+                  {me?.user?.role === 'admin' && (
+                    <DropdownMenuItem asChild>
+                      <Link href="/admin" className="cursor-pointer font-medium text-emerald-700">
+                        <Shield className="mr-2 h-4 w-4 text-emerald-600" />
+                        <span>Admin Console</span>
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
                     onClick={handleLogout}

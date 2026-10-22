@@ -5,6 +5,9 @@ import { getCurrentUser } from '@/lib/auth'
 export async function GET() {
   try {
     const me = await getCurrentUser()
+    if (!me) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
     const bookings = await db.booking.findMany({
       where: { userId: me.id },
       orderBy: { createdAt: 'desc' },
@@ -59,6 +62,9 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const me = await getCurrentUser()
+    if (!me) {
+      return NextResponse.json({ error: 'Please sign in to book an asset' }, { status: 401 })
+    }
     const body = await request.json()
 
     if (!body.assetId || !body.startDate || !body.endDate) {

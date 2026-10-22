@@ -1,0 +1,1164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RentHub Enterprise — Database Architecture, Schema & ERD Showcase</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-base: #090d16;
+      --bg-surface: #0f172a;
+      --bg-surface-elevated: #1e293b;
+      --bg-glass: rgba(15, 23, 42, 0.75);
+      --border-subtle: rgba(255, 255, 255, 0.08);
+      --border-highlight: rgba(255, 255, 255, 0.16);
+      
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-faint: #64748b;
+      
+      --accent-brand: #3b82f6;
+      --accent-brand-glow: rgba(59, 130, 246, 0.25);
+      
+      --color-pk: #f59e0b;
+      --color-fk: #06b6d4;
+      --color-unique: #a855f7;
+      --color-index: #10b981;
+      
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 16px;
+      --radius-full: 9999px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: var(--bg-base);
+      color: var(--text-main);
+      line-height: 1.5;
+      overflow-x: hidden;
+      min-height: 100vh;
+    }
+
+    /* Ambient Background Glow */
+    .ambient-glow {
+      position: fixed;
+      top: -200px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 1000px;
+      height: 500px;
+      background: radial-gradient(circle, rgba(59, 130, 246, 0.12) 0%, rgba(168, 85, 247, 0.05) 50%, transparent 80%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Top Sticky Navbar */
+    header.top-nav {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      background: var(--bg-glass);
+      border-bottom: 1px solid var(--border-subtle);
+      padding: 0.85rem 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1.5rem;
+    }
+
+    .brand-section {
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+    }
+
+    .brand-badge {
+      width: 38px;
+      height: 38px;
+      border-radius: var(--radius-md);
+      background: linear-gradient(135deg, #0ea5e9, #3b82f6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 1.15rem;
+      color: #fff;
+      box-shadow: 0 4px 14px var(--accent-brand-glow);
+    }
+
+    .brand-title h1 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .version-tag {
+      font-size: 0.68rem;
+      font-weight: 600;
+      background: rgba(255, 255, 255, 0.1);
+      padding: 0.15rem 0.45rem;
+      border-radius: var(--radius-full);
+      color: var(--text-muted);
+      letter-spacing: 0.04em;
+    }
+
+    .brand-title p {
+      font-size: 0.76rem;
+      color: var(--text-muted);
+    }
+
+    /* Stats Banner */
+    .header-stats {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .stat-pill {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.35rem 0.75rem;
+      border-radius: var(--radius-full);
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border-subtle);
+      font-size: 0.76rem;
+      color: var(--text-muted);
+    }
+
+    .stat-pill strong {
+      color: var(--text-main);
+      font-weight: 700;
+    }
+
+    .stat-pill .indicator {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #0ea5e9;
+      box-shadow: 0 0 8px #0ea5e9;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .btn-action {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-main);
+      padding: 0.45rem 0.85rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      text-decoration: none;
+    }
+
+    .btn-action:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: var(--border-highlight);
+    }
+
+    .btn-primary-action {
+      background: linear-gradient(135deg, #0284c7, #2563eb);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #fff;
+    }
+
+    /* Layout Frame */
+    .app-container {
+      display: grid;
+      grid-template-columns: 290px 1fr;
+      min-height: calc(100vh - 65px);
+      position: relative;
+      z-index: 10;
+    }
+
+    /* Sidebar Navigation */
+    aside.sidebar {
+      position: sticky;
+      top: 65px;
+      height: calc(100vh - 65px);
+      overflow-y: auto;
+      background: rgba(11, 16, 27, 0.65);
+      backdrop-filter: blur(8px);
+      border-right: 1px solid var(--border-subtle);
+      padding: 1.25rem 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    aside.sidebar::-webkit-scrollbar {
+      width: 5px;
+    }
+    aside.sidebar::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: var(--radius-full);
+    }
+
+    .sidebar-section-title {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-faint);
+      margin-bottom: 0.4rem;
+      padding-left: 0.5rem;
+    }
+
+    .nav-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.55rem 0.75rem;
+      border-radius: var(--radius-sm);
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.82rem;
+      font-weight: 500;
+      transition: all 0.15s ease;
+      cursor: pointer;
+    }
+
+    .nav-item:hover, .nav-item.active {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text-main);
+    }
+
+    .nav-item.active {
+      background: rgba(14, 165, 233, 0.12);
+      color: #38bdf8;
+      font-weight: 600;
+      border-left: 3px solid #0ea5e9;
+    }
+
+    .nav-item .count-badge {
+      font-size: 0.7rem;
+      font-weight: 600;
+      background: rgba(255, 255, 255, 0.06);
+      padding: 0.1rem 0.4rem;
+      border-radius: var(--radius-full);
+      color: var(--text-faint);
+    }
+
+    /* Main Content */
+    main.content {
+      padding: 2rem 2.5rem;
+      max-width: 1350px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    /* ERD Hero Container */
+    .erd-container-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .erd-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.25rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .erd-header h2 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .erd-view-wrapper {
+      background: #060911;
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 1.5rem;
+      overflow-x: auto;
+      display: flex;
+      justify-content: center;
+    }
+
+    .mermaid {
+      width: 100%;
+      min-width: 700px;
+    }
+
+    /* Search & Filter Toolbar */
+    .controls-banner {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    .search-row {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .search-input-wrapper {
+      flex: 1;
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .search-input-wrapper svg {
+      position: absolute;
+      left: 1rem;
+      width: 18px;
+      height: 18px;
+      color: var(--text-faint);
+      pointer-events: none;
+    }
+
+    .search-input {
+      width: 100%;
+      background: rgba(11, 16, 27, 0.8);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-main);
+      padding: 0.75rem 1rem 0.75rem 2.75rem;
+      border-radius: var(--radius-md);
+      font-size: 0.9rem;
+      font-family: inherit;
+      outline: none;
+      transition: all 0.2s ease;
+    }
+
+    .search-input:focus {
+      border-color: var(--accent-brand);
+      box-shadow: 0 0 0 3px var(--accent-brand-glow);
+    }
+
+    .filter-pills-row {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+      padding-top: 0.75rem;
+    }
+
+    .pill-btn {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-muted);
+      padding: 0.35rem 0.75rem;
+      border-radius: var(--radius-full);
+      font-size: 0.76rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .pill-btn:hover {
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text-main);
+    }
+
+    .pill-btn.active {
+      background: #0284c7;
+      border-color: #38bdf8;
+      color: #fff;
+    }
+
+    /* Table Specification Card */
+    .table-spec-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      margin-bottom: 1.5rem;
+      overflow: hidden;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .table-spec-card:hover {
+      border-color: var(--border-highlight);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+    }
+
+    .table-card-header {
+      padding: 1rem 1.25rem;
+      background: rgba(15, 23, 42, 0.9);
+      border-bottom: 1px solid var(--border-subtle);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    .table-identity {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .table-name {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: #38bdf8;
+    }
+
+    .table-group-tag {
+      font-size: 0.68rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 0.15rem 0.5rem;
+      border-radius: var(--radius-full);
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text-muted);
+    }
+
+    .table-desc {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-top: 0.15rem;
+    }
+
+    /* Column Dictionary Table */
+    .table-content-wrap {
+      overflow-x: auto;
+    }
+
+    table.dictionary-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8rem;
+      text-align: left;
+    }
+
+    table.dictionary-table th {
+      background: rgba(11, 16, 27, 0.5);
+      padding: 0.65rem 1rem;
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-faint);
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    table.dictionary-table td {
+      padding: 0.65rem 1rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      vertical-align: middle;
+    }
+
+    table.dictionary-table tr:hover {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .col-name {
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 600;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .col-type {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.74rem;
+      color: #93c5fd;
+      background: rgba(59, 130, 246, 0.1);
+      padding: 0.1rem 0.4rem;
+      border-radius: 4px;
+      border: 1px solid rgba(59, 130, 246, 0.2);
+    }
+
+    .key-badge {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.65rem;
+      font-weight: 700;
+      padding: 0.1rem 0.35rem;
+      border-radius: 4px;
+      letter-spacing: 0.02em;
+    }
+
+    .badge-pk { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
+    .badge-fk { background: rgba(6, 182, 212, 0.15); color: #38bdf8; border: 1px solid rgba(6, 182, 212, 0.3); }
+    .badge-uq { background: rgba(168, 85, 247, 0.15); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.3); }
+    .badge-idx { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+
+    .nullable-indicator {
+      font-size: 0.72rem;
+      font-weight: 600;
+    }
+    .nullable-yes { color: var(--text-faint); }
+    .nullable-no { color: #f87171; }
+
+    .default-val {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.72rem;
+      color: var(--text-muted);
+    }
+
+    /* Mobile Responsive */
+    @media (max-width: 850px) {
+      .app-container {
+        grid-template-columns: 1fr;
+      }
+      aside.sidebar {
+        display: none;
+      }
+      main.content {
+        padding: 1.25rem;
+      }
+      header.top-nav {
+        padding: 0.75rem 1rem;
+      }
+      .header-stats {
+        display: none;
+      }
+    }
+  </style>
+
+  <!-- Load Mermaid ESM -->
+  <script type="module">
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: 'dark',
+      themeVariables: {
+        darkMode: true,
+        background: '#060911',
+        primaryColor: '#1e293b',
+        primaryTextColor: '#f8fafc',
+        primaryBorderColor: '#3b82f6',
+        lineColor: '#38bdf8',
+        secondaryColor: '#0f172a',
+        tertiaryColor: '#1e293b'
+      }
+    });
+  </script>
+</head>
+<body>
+  <div class="ambient-glow"></div>
+
+  <!-- Top Navigation Header -->
+  <header class="top-nav">
+    <div class="brand-section">
+      <div class="brand-badge">DB</div>
+      <div class="brand-title">
+        <h1>RentHub Database Schema <span class="version-tag">Prisma v6</span></h1>
+        <p>Enterprise Relational Data Model & ERD Showcase</p>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="header-stats">
+      <div class="stat-pill">
+        <span class="indicator"></span>
+        <span>Engine: <strong>SQLite 3</strong></span>
+      </div>
+      <div class="stat-pill">
+        <span>Tables: <strong>30 Models</strong></span>
+      </div>
+      <div class="stat-pill">
+        <span>Columns: <strong>160+ Fields</strong></span>
+      </div>
+    </div>
+
+    <div class="header-actions">
+      <a href="/api-docs.html" class="btn-action">
+        <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
+        API Showcase
+      </a>
+      <a href="#erd-section" class="btn-action btn-primary-action">
+        <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
+        View ERD
+      </a>
+    </div>
+  </header>
+
+  <div class="app-container">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+      <div>
+        <div class="sidebar-section-title">Navigation</div>
+        <ul class="nav-list">
+          <li><a href="#erd-section" class="nav-item active"><span>📊 Mermaid ERD Diagram</span></a></li>
+          <li><a href="#group-identity" class="nav-item"><span>👥 Identity & Tenancy</span> <span class="count-badge">2</span></a></li>
+          <li><a href="#group-catalog" class="nav-item"><span>📦 Catalog & Fleet</span> <span class="count-badge">10</span></a></li>
+          <li><a href="#group-requests" class="nav-item"><span>📋 Requests & Holds</span> <span class="count-badge">9</span></a></li>
+          <li><a href="#group-operations" class="nav-item"><span>⚡ Reservations & Custody</span> <span class="count-badge">12</span></a></li>
+          <li><a href="#group-returns" class="nav-item"><span>🔄 Returns & Settlement</span> <span class="count-badge">7</span></a></li>
+        </ul>
+      </div>
+
+      <div>
+        <div class="sidebar-section-title">Database Info</div>
+        <div style="font-size: 0.78rem; color: var(--text-muted); line-height: 1.6; padding: 0.5rem;">
+          <div><strong>Provider:</strong> <code>sqlite</code></div>
+          <div><strong>Location:</strong> <code>db/custom.db</code></div>
+          <div><strong>Client Engine:</strong> <code>prisma-client-v6</code></div>
+          <div><strong>Isolation:</strong> Multi-tenant anchored</div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="content">
+      <!-- ERD Interactive Graph Section -->
+      <section id="erd-section" class="erd-container-card">
+        <div class="erd-header">
+          <h2>
+            <svg width="20" height="20" fill="none" stroke="#38bdf8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"/></svg>
+            Interactive Entity Relationship Diagram (ERD)
+          </h2>
+          <span style="font-size: 0.78rem; color: var(--text-muted);">Visualizing foreign key topologies & entity cascades</span>
+        </div>
+
+        <div class="erd-view-wrapper">
+          <pre class="mermaid">
+erDiagram
+    User ||--o{ Booking : "makes"
+    User ||--o{ Review : "writes"
+    User ||--o{ RentalRequest : "submits"
+    User ||--o{ RentalReservation : "holds"
+
+    RentalCompany ||--o{ AssetLocation : "operates"
+    RentalCompany ||--o{ AssetListing : "owns"
+    RentalCompany ||--o{ AssetAuditEvent : "records"
+    RentalCompany ||--o{ RentalRequest : "receives"
+
+    AssetCategory ||--o{ AssetCategory : "subcategories"
+    AssetCategory ||--o{ AssetListing : "classifies"
+    AssetBrand ||--o{ AssetListing : "brands"
+
+    AssetListing ||--o{ AssetUnit : "serializes"
+    AssetListing ||--o{ AssetRate : "prices"
+    AssetListing ||--o| AssetRentalPolicy : "governs"
+    AssetListing ||--o{ AssetLocationOption : "avail_at"
+    AssetListing ||--o{ AssetBlockedInterval : "blocks"
+    AssetListing ||--o{ AssetAuditEvent : "audits"
+    AssetListing ||--o{ RentalRequest : "requested_in"
+    AssetListing ||--o{ RentalInventoryHold : "held_for"
+    AssetListing ||--o{ RentalReservationLine : "reserved_in"
+
+    AssetLocation ||--o{ AssetUnit : "stores"
+    AssetLocation ||--o{ AssetLocationOption : "supports"
+    AssetLocation ||--o{ RentalRequest : "pickup_loc"
+    AssetLocation ||--o{ RentalRequest : "return_loc"
+    AssetLocation ||--o{ RentalReservation : "located_at"
+
+    AssetUnit ||--o{ AssetBlockedInterval : "blackouts"
+    AssetUnit ||--o{ RentalHoldUnit : "locked_in"
+    AssetUnit ||--o{ RentalUnitAllocation : "dispatched_in"
+    AssetUnit ||--o{ RentalHandoverItem : "handed_over"
+    AssetUnit ||--o{ RentalInspectionItem : "inspected_in"
+    AssetUnit ||--o{ RentalMaintenanceTask : "maintained_by"
+
+    RentalRequest ||--o| RentalQuoteSnapshot : "freezes_quote"
+    RentalRequest ||--o| RentalRequestAddress : "delivers_to"
+    RentalRequest ||--o| RentalTermsAcceptance : "signed_terms"
+    RentalRequest ||--o{ RentalRequestEvent : "logs_lifecycle"
+    RentalRequest ||--o| RentalInventoryHold : "locks_stock"
+    RentalRequest ||--o{ RentalApprovalDecision : "reviewed_by"
+    RentalRequest ||--o{ RentalChangeProposal : "counter_offered"
+    RentalRequest ||--o| RentalPaymentOrder : "bills"
+    RentalRequest ||--o| RentalDepositLedger : "tracks_deposit"
+    RentalRequest ||--o| RentalReservation : "confirmed_into"
+
+    RentalInventoryHold ||--o{ RentalHoldUnit : "locks_units"
+    RentalPaymentOrder ||--o{ RentalPaymentAttempt : "attempts"
+    RentalPaymentOrder ||--o| RentalPaymentReceipt : "issues_receipt"
+
+    RentalReservation ||--o{ RentalReservationLine : "contains_items"
+    RentalReservation ||--o| RentalFulfillmentTask : "staged_by"
+    RentalReservation ||--o| RentalHandover : "dispatched_via"
+    RentalReservation ||--o{ RentalEvidence : "photo_records"
+    RentalReservation ||--o{ RentalExtensionRequest : "extends"
+    RentalReservation ||--o{ RentalIncident : "incident_reports"
+    RentalReservation ||--o| RentalReturnCase : "intakes"
+    RentalReservation ||--o| RentalInspection : "quality_check"
+    RentalReservation ||--o| RentalSettlement : "settles_deposit"
+    RentalReservation ||--o| RentalClosure : "closes"
+
+    RentalReservationLine ||--o{ RentalUnitAllocation : "allocates_units"
+    RentalHandover ||--o{ RentalHandoverItem : "items_handed"
+    RentalReturnCase ||--o| RentalReturnReceipt : "receipted_with"
+    RentalInspection ||--o{ RentalInspectionItem : "item_evaluations"
+          </pre>
+        </div>
+      </section>
+
+      <!-- Controls Banner -->
+      <section class="controls-banner">
+        <div class="search-row">
+          <div class="search-input-wrapper">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+            <input type="text" id="schema-search" class="search-input" placeholder="Search tables or columns (e.g. AssetListing, passwordHash, depositAmount, unitId)...">
+          </div>
+        </div>
+
+        <div class="filter-pills-row">
+          <button class="pill-btn active" data-filter="all">All Tables (30)</button>
+          <button class="pill-btn" data-filter="identity">Identity & Tenancy</button>
+          <button class="pill-btn" data-filter="catalog">Catalog & Fleet</button>
+          <button class="pill-btn" data-filter="requests">Requests & Payments</button>
+          <button class="pill-btn" data-filter="operations">Reservations & Handover</button>
+          <button class="pill-btn" data-filter="returns">Returns & Settlement</button>
+        </div>
+      </section>
+
+      <!-- Table Dictionary Cards List -->
+      <div id="tables-container">
+        <!-- Rendered dynamically -->
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // Master Schema Data
+    const schemaTables = [
+      {
+        name: "User",
+        group: "identity",
+        groupTitle: "Identity & Tenancy",
+        desc: "Core user identity table supporting strict role separation (client vs admin), scrypt password hashing, and login audit tracking.",
+        columns: [
+          { name: "id", type: "String", null: false, def: "cuid()", pk: true, desc: "Unique user identifier" },
+          { name: "email", type: "String", null: false, uq: true, desc: "Login email identifier" },
+          { name: "name", type: "String", null: false, desc: "Full display name" },
+          { name: "avatar", type: "String", null: true, desc: "Profile picture URL" },
+          { name: "phone", type: "String", null: true, desc: "Contact phone number" },
+          { name: "passwordHash", type: "String", null: true, desc: "Scrypt salted password hash" },
+          { name: "status", type: "String", null: false, def: "'ACTIVE'", desc: "'ACTIVE' | 'SUSPENDED'" },
+          { name: "role", type: "String", null: false, def: "'client'", desc: "'client' | 'admin' | 'owner'" },
+          { name: "lastLoginAt", type: "DateTime", null: true, desc: "Timestamp of last session authentication" },
+          { name: "createdAt", type: "DateTime", null: false, def: "now()", desc: "Account creation timestamp" },
+          { name: "updatedAt", type: "DateTime", null: false, desc: "Auto-updated timestamp" }
+        ]
+      },
+      {
+        name: "RentalCompany",
+        group: "identity",
+        groupTitle: "Identity & Tenancy",
+        desc: "Anchors multi-location enterprise business information, default currency, and timezone configurations.",
+        columns: [
+          { name: "id", type: "String", null: false, def: "cuid()", pk: true, desc: "Company identifier" },
+          { name: "name", type: "String", null: false, def: "'RentHub Enterprise Rentals'", desc: "Trading name" },
+          { name: "legalName", type: "String", null: true, def: "'RentHub Co., Ltd.'", desc: "Registered entity name" },
+          { name: "currency", type: "String", null: false, def: "'USD'", desc: "Default billing currency" },
+          { name: "timezone", type: "String", null: false, def: "'Asia/Phnom_Penh'", desc: "Operational timezone" },
+          { name: "phone", type: "String", null: true, desc: "Customer service hotline" },
+          { name: "email", type: "String", null: true, desc: "Official inquiries email" },
+          { name: "address", type: "String", null: true, desc: "Physical head office address" }
+        ]
+      },
+      {
+        name: "AssetCategory",
+        group: "catalog",
+        groupTitle: "Catalog & Fleet",
+        desc: "Hierarchical category tree with self-referencing parentId for nested navigation and display ordering.",
+        columns: [
+          { name: "id", type: "String", null: false, def: "cuid()", pk: true, desc: "Category ID" },
+          { name: "name", type: "String", null: false, desc: "Category display title" },
+          { name: "slug", type: "String", null: false, uq: true, desc: "SEO-friendly URL identifier" },
+          { name: "parentId", type: "String", null: true, fk: "AssetCategory.id", desc: "Parent category for hierarchy" },
+          { name: "iconName", type: "String", null: true, def: "'Folder'", desc: "Lucide icon name" },
+          { name: "color", type: "String", null: true, def: "'#10B981'", desc: "Brand accent hex color" },
+          { name: "displayOrder", type: "Int", null: false, def: "0", desc: "Sorting order" },
+          { name: "status", type: "String", null: false, def: "'ACTIVE'", desc: "'ACTIVE' | 'INACTIVE' | 'ARCHIVED'" }
+        ]
+      },
+      {
+        name: "AssetBrand",
+        group: "catalog",
+        groupTitle: "Catalog & Fleet",
+        desc: "Equipment manufacturer brand registry (e.g. Apple, Sony, DJI, Canon).",
+        columns: [
+          { name: "id", type: "String", null: false, def: "cuid()", pk: true, desc: "Brand ID" },
+          { name: "name", type: "String", null: false, uq: true, desc: "Brand title" },
+          { name: "slug", type: "String", null: false, uq: true, desc: "Unique brand slug" },
+          { name: "isActive", type: "Boolean", null: false, def: "true", desc: "Brand active flag" }
+        ]
+      },
+      {
+        name: "AssetLocation",
+        group: "catalog",
+        groupTitle: "Catalog & Fleet",
+        desc: "Physical storage facilities, hubs, warehouses, and customer collection/return counters.",
+        columns: [
+          { name: "id", type: "String", null: false, def: "cuid()", pk: true, desc: "Location ID" },
+          { name: "companyId", type: "String", null: false, fk: "RentalCompany.id", desc: "Owner enterprise company" },
+          { name: "name", type: "String", null: false, desc: "Warehouse / Branch name" },
+          { name: "code", type: "String", null: false, uq: true, desc: "Short code (e.g. LOC-PNH-01)" },
+          { name: "address", type: "String", null: false, desc: "Physical street address" },
+          { name: "city", type: "String", null: false, desc: "City / Province" },
+          { name: "isPickupDefault", type: "Boolean", null: false, def: "true", desc: "Default pickup center" },
+          { name: "isActive", type: "Boolean", null: false, def: "true", desc: "Active location flag" }
+        ]
+      },
+      {
+        name: "AssetListing",
+        group: "catalog",
+        groupTitle: "Catalog & Fleet",
+        desc: "Master catalog definition for rentable items, containing images, specs, rates, and policies.",
+        columns: [
+          { name: "id", type: "String", null: false, def: "cuid()", pk: true, desc: "Listing primary key" },
+          { name: "companyId", type: "String", null: false, fk: "RentalCompany.id", desc: "Owner company" },
+          { name: "code", type: "String", null: false, uq: true, desc: "Unique SKU / asset code" },
+          { name: "name", type: "String", null: false, desc: "Item display title" },
+          { name: "slug", type: "String", null: false, uq: true, desc: "URL unique slug" },
+          { name: "categoryId", type: "String", null: false, fk: "AssetCategory.id", desc: "Primary category" },
+          { name: "brandId", type: "String", null: true, fk: "AssetBrand.id", desc: "Brand manufacturer" },
+          { name: "trackingMode", type: "String", null: false, def: "'SERIALIZED'", desc: "'SERIALIZED' | 'QUANTITY'" },
+          { name: "coverImage", type: "String", null: false, desc: "Primary hero photo URL" },
+          { name: "images", type: "String", null: false, def: "'[]'", desc: "JSON array string of photo URLs" },
+          { name: "visibility", type: "String", null: false, def: "'DRAFT'", desc: "'DRAFT' | 'PUBLISHED' | 'ARCHIVED'" },
+          { name: "deliveryFee", type: "Float", null: false, def: "0", desc: "Standard delivery surcharge" }
+        ]
+      },
+      {
+        name: "AssetUnit",
+        group: "catalog",
+        groupTitle: "Catalog & Fleet",
+        desc: "Serialized physical instances of equipment tracked by barcoded asset tags.",
+        columns: [
+          { name: "id", type: "String", null: false, def: "cuid()", pk: true, desc: "Physical unit ID" },
+          { name: "listingId", type: "String", null: false, fk: "AssetListing.id", desc: "Parent catalog listing" },
+          { name: "assetTag", type: "String", null: false, uq: true, desc: "Barcode / QR asset tag (TO-LAP-0001)" },
+          { name: "serialNumber", type: "String", null: true, desc: "OEM hardware serial number" },
+          { name: "locationId", type: "String", null: false, fk: "AssetLocation.id", desc: "Current warehouse location" },
+          { name: "baseStatus", type: "String", null: false, def: "'ACTIVE'", desc: "'ACTIVE' | 'MAINTENANCE' | 'LOST'" },
+          { name: "conditionGrade", type: "String", null: false, def: "'GOOD'", desc: "'NEW' | 'EXCELLENT' | 'GOOD' | 'FAIR'" },
+          { name: "accessories", type: "String", null: true, desc: "Included peripheral accessories" }
+        ]
+      },
+      {
+        name: "AssetRate",
+        group: "catalog",
+        groupTitle: "Catalog & Fleet",
+        desc: "Pricing tiers and billing duration intervals for asset listings.",
+        columns: [
+          { name: "id", type: "String", null: false, def: "cuid()", pk: true, desc: "Rate rule ID" },
+          { name: "listingId", type: "String", null: false, fk: "AssetListing.id", desc: "Target listing" },
+          { name: "currency", type: "String", null: false, def: "'USD'", desc: "Currency (USD | KHR)" },
+          { name: "billingUnit", type: "String", null: false, def: "'DAY'", desc: "'HOUR' | 'DAY' | 'WEEK' | 'MONTH'" },
+          { name: "rateAmount", type: "Float", null: false, desc: "Rental price per unit of time" },
+          { name: "isPrimary", type: "Boolean", null: false, def: "true", desc: "Primary base rate flag" }
+        ]
+      },
+      {
+        name: "AssetRentalPolicy",
+        group: "catalog",
+        groupTitle: "Catalog & Fleet",
+        desc: "Rules governing deposit amounts, turnaround buffers, grace periods, and late penalty fees.",
+        columns: [
+          { name: "id", type: "String", null: false, def: "cuid()", pk: true, desc: "Policy primary key" },
+          { name: "listingId", type: "String", null: false, uq: true, fk: "AssetListing.id", desc: "1-to-1 listing policy" },
+          { name: "securityDeposit", type: "Float", null: false, def: "0", desc: "Required refundable deposit ($)" },
+          { name: "minimumDuration", type: "Int", null: false, def: "1", desc: "Minimum rental duration" },
+          { name: "lateFeeAmount", type: "Float", null: false, def: "0", desc: "Late penalty amount" },
+          { name: "lateGraceMinutes", type: "Int", null: false, def: "30", desc: "Late return grace period (mins)" },
+          { name: "preparationBufferMinutes", type: "Int", null: false, def: "120", desc: "Prep/cleaning lead time" },
+          { name: "returnBufferMinutes", type: "Int", null: false, def: "120", desc: "Post-return turnaround buffer" }
+        ]
+      },
+      {
+        name: "RentalRequest",
+        group: "requests",
+        groupTitle: "Requests & Payments",
+        desc: "Core commercial intake proposal submitted by renter, linking dates, locations, and quote snapshots.",
+        columns: [
+          { name: "id", type: "String", null: false, def: "cuid()", pk: true, desc: "Request ID" },
+          { name: "requestNo", type: "String", null: false, uq: true, idx: true, desc: "Serial code (REQ-2026-000001)" },
+          { name: "renterId", type: "String", null: false, fk: "User.id", desc: "Customer user account" },
+          { name: "listingId", type: "String", null: false, fk: "AssetListing.id", desc: "Target equipment model" },
+          { name: "companyId", type: "String", null: false, fk: "RentalCompany.id", desc: "Operating enterprise" },
+          { name: "status", type: "String", null: false, def: "'PENDING_APPROVAL'", idx: true, desc: "Commercial state enum" },
+          { name: "startAt", type: "DateTime", null: false, desc: "Rental start datetime" },
+          { name: "endAt", type: "DateTime", null: false, desc: "Rental end datetime" },
+          { name: "rentalDays", type: "Int", null: false, desc: "Calculated duration in days" },
+          { name: "quantity", type: "Int", null: false, def: "1", desc: "Units count requested" },
+          { name: "fulfillment", type: "String", null: false, def: "'PICKUP'", desc: "'PICKUP' | 'DELIVERY'" },
+          { name: "paymentDueAt", type: "DateTime", null: true, desc: "Payment completion deadline" }
+        ]
+      },
+      {
+        name: "RentalQuoteSnapshot",
+        group: "requests",
+        groupTitle: "Requests & Payments",
+        desc: "Immutable financial calculation snapshot frozen at the exact time of request submission.",
+        columns: [
+          { name: "id", type: "String", null: false, def: "cuid()", pk: true, desc: "Snapshot ID" },
+          { name: "requestId", type: "String", null: false, uq: true, fk: "RentalRequest.id", desc: "Parent request" },
+          { name: "unitRate", type: "Float", null: false, desc: "Applied daily rate" },
+          { name: "rentalSubtotal", type: "Float", null: false, desc: "Base equipment fee" },
+          { name: "securityDeposit", type: "Float", null: false, def: "0", desc: "Held deposit amount" },
+          { name: "deliveryFee", type: "Float", null: false, def: "0", desc: "Logistics charge" },
+          { name: "totalPayable", type: "Float", null: false, desc: "Sum total invoice due" }
+        ]
+      },
+      {
+        name: "RentalInventoryHold",
+        group: "requests",
+        groupTitle: "Requests & Payments",
+        desc: "Time-bounded reservation lock preventing other renters from booking units while awaiting payment.",
+        columns: [
+          { name: "id", type: "String", null: false, def: "cuid()", pk: true, desc: "Hold primary key" },
+          { name: "requestId", type: "String", null: false, uq: true, fk: "RentalRequest.id", desc: "Parent request" },
+          { name: "listingId", type: "String", null: false, fk: "AssetListing.id", desc: "Locked equipment" },
+          { name: "quantity", type: "Int", null: false, def: "1", desc: "Held unit count" },
+          { name: "startAt", type: "DateTime", null: false, desc: "Hold start" },
+          { name: "endAt", type: "DateTime", null: false, desc: "Hold end" },
+          { name: "expiresAt", type: "DateTime", null: false, idx: true, desc: "Auto-release expiration time" },
+          { name: "status", type: "String", null: false, def: "'ACTIVE'", desc: "'ACTIVE' | 'CONSUMED' | 'EXPIRED'" }
+        ]
+      },
+      {
+        name: "RentalPaymentOrder",
+        group: "requests",
+        groupTitle: "Requests & Payments",
+        desc: "Payment order invoice tracking multi-channel transaction attempts, payment state, and receipts.",
+        columns: [
+          { name: "id", type: "String", null: false, def: "cuid()", pk: true, desc: "Payment order ID" },
+          { name: "requestId", type: "String", null: false, uq: true, fk: "RentalRequest.id", desc: "Parent request" },
+          { name: "rentalAmount", type: "Float", null: false, desc: "Equipment charge" },
+          { name: "depositAmount", type: "Float", null: false, def: "0", desc: "Deposit charge" },
+          { name: "totalDue", type: "Float", null: false, desc: "Total sum due" },
+          { name: "paymentStatus", type: "String", null: false, def: "'UNPAID'", idx: true, desc: "'UNPAID' | 'PROCESSING' | 'PAID'" },
+          { name: "dueAt", type: "DateTime", null: false, desc: "Payment deadline" },
+          { name: "paidAt", type: "DateTime", null: true, desc: "Payment confirmation timestamp" }
+        ]
+      },
+      {
+        name: "RentalReservation",
+        group: "operations",
+        groupTitle: "Reservations & Custody",
+        desc: "Confirmed booking created immediately upon payment success; anchors operational fulfillment.",
+        columns: [
+          { name: "id", type: "String", null: false, def: "cuid()", pk: true, desc: "Reservation ID" },
+          { name: "bookingNo", type: "String", null: false, uq: true, idx: true, desc: "Serial reference (BK-2026-000001)" },
+          { name: "requestId", type: "String", null: false, uq: true, fk: "RentalRequest.id", desc: "Parent request" },
+          { name: "renterId", type: "String", null: false, fk: "User.id", desc: "Renter customer" },
+          { name: "status", type: "String", null: false, def: "'RESERVED'", idx: true, desc: "'RESERVED' | 'ACTIVE' | 'COMPLETED'" },
+          { name: "startAt", type: "DateTime", null: false, idx: true, desc: "Rental commencement" },
+          { name: "endAt", type: "DateTime", null: false, desc: "Rental conclusion" },
+          { name: "fulfillmentMode", type: "String", null: false, def: "'PICKUP'", desc: "'PICKUP' | 'DELIVERY'" }
+        ]
+      },
+      {
+        name: "RentalHandover",
+        group: "operations",
+        groupTitle: "Reservations & Custody",
+        desc: "Legal custody transfer documenting physical release of equipment and receiver signature.",
+        columns: [
+          { name: "id", type: "String", null: false, def: "cuid()", pk: true, desc: "Handover ID" },
+          { name: "reservationId", type: "String", null: false, uq: true, fk: "RentalReservation.id", desc: "Booking" },
+          { name: "handoverAt", type: "DateTime", null: false, def: "now()", desc: "Departure timestamp" },
+          { name: "staffName", type: "String", null: false, def: "'Warehouse Operations'", desc: "Staff dispatching" },
+          { name: "receiverName", type: "String", null: false, desc: "Name of customer taking equipment" },
+          { name: "signature", type: "String", null: true, desc: "Base64 receiver digital signature" },
+          { name: "status", type: "String", null: false, def: "'COMPLETED'", desc: "'COMPLETED' | 'CANCELLED'" }
+        ]
+      },
+      {
+        name: "RentalReturnCase",
+        group: "returns",
+        groupTitle: "Returns & Settlement",
+        desc: "Return intake tracking physical arrival of equipment back at warehouse dock.",
+        columns: [
+          { name: "id", type: "String", null: false, def: "cuid()", pk: true, desc: "Return case ID" },
+          { name: "reservationId", type: "String", null: false, uq: true, fk: "RentalReservation.id", desc: "Target reservation" },
+          { name: "status", type: "String", null: false, def: "'SCHEDULED'", desc: "'SCHEDULED' | 'RECEIVED'" },
+          { name: "scheduledAt", type: "DateTime", null: false, desc: "Target drop-off datetime" },
+          { name: "actualReceivedAt", type: "DateTime", null: true, desc: "Physical arrival timestamp" },
+          { name: "receivingStaffName", type: "String", null: true, desc: "Warehouse receiving staff" }
+        ]
+      },
+      {
+        name: "RentalInspection",
+        group: "returns",
+        groupTitle: "Returns & Settlement",
+        desc: "Technical post-rental quality and functional inspection record evaluating damages.",
+        columns: [
+          { name: "id", type: "String", null: false, def: "cuid()", pk: true, desc: "Inspection ID" },
+          { name: "reservationId", type: "String", null: false, uq: true, fk: "RentalReservation.id", desc: "Target reservation" },
+          { name: "inspectorName", type: "String", null: false, def: "'Quality Inspector'", desc: "QA technician" },
+          { name: "status", type: "String", null: false, def: "'IN_PROGRESS'", desc: "'IN_PROGRESS' | 'COMPLETED'" },
+          { name: "verdict", type: "String", null: false, def: "'PASS'", desc: "'PASS' | 'DAMAGED' | 'MISSING'" },
+          { name: "notes", type: "String", null: true, desc: "Technical inspection diagnosis" }
+        ]
+      },
+      {
+        name: "RentalSettlement",
+        group: "returns",
+        groupTitle: "Returns & Settlement",
+        desc: "Security deposit liquidation statement reconciling damage fees, late penalties, and refunds.",
+        columns: [
+          { name: "id", type: "String", null: false, def: "cuid()", pk: true, desc: "Settlement ID" },
+          { name: "reservationId", type: "String", null: false, uq: true, fk: "RentalReservation.id", desc: "Target reservation" },
+          { name: "depositHeld", type: "Float", null: false, def: "0", desc: "Original deposit held" },
+          { name: "lateFee", type: "Float", null: false, def: "0", desc: "Late penalties" },
+          { name: "damageFee", type: "Float", null: false, def: "0", desc: "Damage deductions" },
+          { name: "totalDeductions", type: "Float", null: false, def: "0", desc: "Sum of penalties" },
+          { name: "netRefundAmount", type: "Float", null: false, def: "0", desc: "Refund sum paid to customer" },
+          { name: "status", type: "String", null: false, def: "'PENDING'", desc: "'PENDING' | 'APPROVED' | 'REFUNDED'" }
+        ]
+      }
+    ];
+
+    let currentFilter = "all";
+    let searchQuery = "";
+
+    const tablesContainer = document.getElementById("tables-container");
+    const searchInput = document.getElementById("schema-search");
+
+    function renderTables() {
+      tablesContainer.innerHTML = "";
+
+      const filtered = schemaTables.filter(tbl => {
+        if (currentFilter !== "all" && tbl.group !== currentFilter) {
+          return false;
+        }
+        if (searchQuery) {
+          const q = searchQuery.toLowerCase();
+          const matchTableName = tbl.name.toLowerCase().includes(q);
+          const matchDesc = tbl.desc.toLowerCase().includes(q);
+          const matchCols = tbl.columns.some(c => c.name.toLowerCase().includes(q) || c.type.toLowerCase().includes(q));
+          if (!matchTableName && !matchDesc && !matchCols) {
+            return false;
+          }
+        }
+        return true;
+      });
+
+      filtered.forEach(tbl => {
+        const card = document.createElement("div");
+        card.className = "table-spec-card";
+
+        card.innerHTML = `
+          <div class="table-card-header">
+            <div class="table-identity">
+              <span class="table-name">${tbl.name}</span>
+              <span class="table-group-tag">${tbl.groupTitle}</span>
+            </div>
+            <div style="font-size:0.75rem; color:var(--text-faint);">
+              ${tbl.columns.length} columns
+            </div>
+          </div>
+          <div style="padding:0.75rem 1.25rem; font-size:0.8rem; color:var(--text-muted); border-bottom:1px solid rgba(255,255,255,0.04);">
+            ${tbl.desc}
+          </div>
+          <div class="table-content-wrap">
+            <table class="dictionary-table">
+              <thead>
+                <tr>
+                  <th>Column Name</th>
+                  <th>Type</th>
+                  <th>Nullable</th>
+                  <th>Default</th>
+                  <th>Key / Constraints</th>
+                  <th>Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${tbl.columns.map(c => `
+                  <tr>
+                    <td>
+                      <span class="col-name">${c.name}</span>
+                    </td>
+                    <td><span class="col-type">${c.type}</span></td>
+                    <td>
+                      <span class="nullable-indicator ${c.null ? 'nullable-yes' : 'nullable-no'}">
+                        ${c.null ? 'NULL' : 'NOT NULL'}
+                      </span>
+                    </td>
+                    <td><span class="default-val">${c.def || '—'}</span></td>
+                    <td>
+                      ${c.pk ? '<span class="key-badge badge-pk">PK</span> ' : ''}
+                      ${c.fk ? `<span class="key-badge badge-fk" title="FK -> ${c.fk}">FK &rarr; ${c.fk}</span> ` : ''}
+                      ${c.uq ? '<span class="key-badge badge-uq">UNIQUE</span> ' : ''}
+                      ${c.idx ? '<span class="key-badge badge-idx">INDEX</span>' : ''}
+                    </td>
+                    <td style="color:var(--text-muted);">${c.desc}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        `;
+
+        tablesContainer.appendChild(card);
+      });
+    }
+
+    // Filter Buttons
+    document.querySelectorAll("[data-filter]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll("[data-filter]").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        currentFilter = btn.getAttribute("data-filter");
+        renderTables();
+      });
+    });
+
+    // Search Input
+    let timer = null;
+    searchInput.addEventListener("input", (e) => {
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        searchQuery = e.target.value.trim();
+        renderTables();
+      }, 150);
+    });
+
+    // Initial load
+    renderTables();
+  </script>
+</body>
+</html>

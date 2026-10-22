@@ -3,7 +3,7 @@
 
 generator client {
   provider = "prisma-client-js"
-  output   = "../src/lib/prisma-client-v5"
+  output   = "../src/lib/prisma-client-v6"
 }
 
 datasource db {
@@ -16,11 +16,14 @@ model User {
   email     String   @unique
   name      String
   avatar    String?
-  phone     String?
-  bio       String?
-  role      String   @default("member") // "member" | "admin" | "owner"
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  phone        String?
+  bio          String?
+  passwordHash String?
+  status       String    @default("ACTIVE") // "ACTIVE" | "SUSPENDED"
+  lastLoginAt  DateTime?
+  role         String    @default("client") // "client" | "admin" | "owner"
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
   bookings Booking[]
   reviews  Review[]

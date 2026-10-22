@@ -1,4 +1,4 @@
-import { PrismaClient } from '@/lib/prisma-client-v5'
+import { PrismaClient } from '@/lib/prisma-client-v6'
 
 // Invalidate any stale global instance from previous schemas
 const globalForPrisma = globalThis as unknown as {

@@ -42,6 +42,7 @@ export function AddListingSection() {
     queryKey: ['categories'],
     queryFn: async () => {
       const r = await fetch('/api/categories')
+      if (!r.ok) throw new Error('Failed to fetch categories')
       return r.json()
     },
   })

@@ -1,0 +1,1940 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RentHub Enterprise — Interactive API Reference & Auth Matrix</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-base: #090d16;
+      --bg-surface: #0f172a;
+      --bg-surface-elevated: #1e293b;
+      --bg-glass: rgba(15, 23, 42, 0.75);
+      --border-subtle: rgba(255, 255, 255, 0.08);
+      --border-highlight: rgba(255, 255, 255, 0.16);
+      
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-faint: #64748b;
+      
+      --accent-brand: #3b82f6;
+      --accent-brand-glow: rgba(59, 130, 246, 0.25);
+      
+      --color-public: #10b981;
+      --color-public-bg: rgba(16, 185, 129, 0.12);
+      --color-client: #06b6d4;
+      --color-client-bg: rgba(6, 182, 212, 0.12);
+      --color-admin: #a855f7;
+      --color-admin-bg: rgba(168, 85, 247, 0.12);
+      --color-webhook: #f59e0b;
+      --color-webhook-bg: rgba(245, 158, 11, 0.12);
+      
+      --method-get: #3b82f6;
+      --method-post: #10b981;
+      --method-put: #f59e0b;
+      --method-delete: #ef4444;
+      
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 16px;
+      --radius-full: 9999px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: var(--bg-base);
+      color: var(--text-main);
+      line-height: 1.5;
+      overflow-x: hidden;
+      min-height: 100vh;
+    }
+
+    /* Ambient Background Glow */
+    .ambient-glow {
+      position: fixed;
+      top: -200px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 1000px;
+      height: 500px;
+      background: radial-gradient(circle, rgba(59, 130, 246, 0.12) 0%, rgba(168, 85, 247, 0.05) 50%, transparent 80%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Top Navigation Header */
+    header.top-nav {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      background: var(--bg-glass);
+      border-bottom: 1px solid var(--border-subtle);
+      padding: 0.85rem 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1.5rem;
+    }
+
+    .brand-section {
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+    }
+
+    .brand-badge {
+      width: 38px;
+      height: 38px;
+      border-radius: var(--radius-md);
+      background: linear-gradient(135deg, #2563eb, #7c3aed);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 1.15rem;
+      color: #fff;
+      box-shadow: 0 4px 14px var(--accent-brand-glow);
+    }
+
+    .brand-title h1 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .version-tag {
+      font-size: 0.68rem;
+      font-weight: 600;
+      background: rgba(255, 255, 255, 0.1);
+      padding: 0.15rem 0.45rem;
+      border-radius: var(--radius-full);
+      color: var(--text-muted);
+      letter-spacing: 0.04em;
+    }
+
+    .brand-title p {
+      font-size: 0.76rem;
+      color: var(--text-muted);
+    }
+
+    /* Top Stats Pills */
+    .header-stats {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .stat-pill {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.35rem 0.75rem;
+      border-radius: var(--radius-full);
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border-subtle);
+      font-size: 0.76rem;
+      color: var(--text-muted);
+    }
+
+    .stat-pill strong {
+      color: var(--text-main);
+      font-weight: 700;
+    }
+
+    .stat-pill .indicator {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+    .stat-pill.pub .indicator { background: var(--color-public); box-shadow: 0 0 8px var(--color-public); }
+    .stat-pill.cli .indicator { background: var(--color-client); box-shadow: 0 0 8px var(--color-client); }
+    .stat-pill.adm .indicator { background: var(--color-admin); box-shadow: 0 0 8px var(--color-admin); }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .btn-action {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-main);
+      padding: 0.45rem 0.85rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      text-decoration: none;
+    }
+
+    .btn-action:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: var(--border-highlight);
+    }
+
+    .btn-primary-action {
+      background: linear-gradient(135deg, #2563eb, #3b82f6);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #fff;
+    }
+
+    .btn-primary-action:hover {
+      background: linear-gradient(135deg, #1d4ed8, #2563eb);
+      box-shadow: 0 4px 12px var(--accent-brand-glow);
+    }
+
+    /* Layout Frame */
+    .app-container {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      min-height: calc(100vh - 65px);
+      position: relative;
+      z-index: 10;
+    }
+
+    /* Sidebar Navigation */
+    aside.sidebar {
+      position: sticky;
+      top: 65px;
+      height: calc(100vh - 65px);
+      overflow-y: auto;
+      background: rgba(11, 16, 27, 0.65);
+      backdrop-filter: blur(8px);
+      border-right: 1px solid var(--border-subtle);
+      padding: 1.25rem 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    aside.sidebar::-webkit-scrollbar {
+      width: 5px;
+    }
+    aside.sidebar::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: var(--radius-full);
+    }
+
+    .sidebar-section-title {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-faint);
+      margin-bottom: 0.4rem;
+      padding-left: 0.5rem;
+    }
+
+    .nav-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.55rem 0.75rem;
+      border-radius: var(--radius-sm);
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.82rem;
+      font-weight: 500;
+      transition: all 0.15s ease;
+      cursor: pointer;
+    }
+
+    .nav-item:hover, .nav-item.active {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text-main);
+    }
+
+    .nav-item.active {
+      background: rgba(59, 130, 246, 0.12);
+      color: #60a5fa;
+      font-weight: 600;
+      border-left: 3px solid #3b82f6;
+    }
+
+    .nav-item .count-badge {
+      font-size: 0.7rem;
+      font-weight: 600;
+      background: rgba(255, 255, 255, 0.06);
+      padding: 0.1rem 0.4rem;
+      border-radius: var(--radius-full);
+      color: var(--text-faint);
+    }
+
+    /* Main Content Area */
+    main.content {
+      padding: 2rem 2.5rem;
+      max-width: 1300px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    /* Control Toolbar (Search & Filters) */
+    .controls-banner {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    .search-row {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .search-input-wrapper {
+      flex: 1;
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .search-input-wrapper svg {
+      position: absolute;
+      left: 1rem;
+      width: 18px;
+      height: 18px;
+      color: var(--text-faint);
+      pointer-events: none;
+    }
+
+    .search-input {
+      width: 100%;
+      background: rgba(11, 16, 27, 0.8);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-main);
+      padding: 0.75rem 1rem 0.75rem 2.75rem;
+      border-radius: var(--radius-md);
+      font-size: 0.9rem;
+      font-family: inherit;
+      outline: none;
+      transition: all 0.2s ease;
+    }
+
+    .search-input:focus {
+      border-color: var(--accent-brand);
+      box-shadow: 0 0 0 3px var(--accent-brand-glow);
+    }
+
+    .filter-pills-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
+      padding-top: 0.5rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .filter-group {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      flex-wrap: wrap;
+    }
+
+    .filter-label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--text-faint);
+      text-transform: uppercase;
+      margin-right: 0.3rem;
+    }
+
+    .pill-btn {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-muted);
+      padding: 0.35rem 0.75rem;
+      border-radius: var(--radius-full);
+      font-size: 0.76rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .pill-btn:hover {
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text-main);
+    }
+
+    .pill-btn.active {
+      background: #2563eb;
+      border-color: #3b82f6;
+      color: #fff;
+    }
+
+    .pill-btn.pill-public.active {
+      background: var(--color-public);
+      border-color: #34d399;
+      color: #064e3b;
+    }
+    .pill-btn.pill-client.active {
+      background: var(--color-client);
+      border-color: #22d3ee;
+      color: #083344;
+    }
+    .pill-btn.pill-admin.active {
+      background: var(--color-admin);
+      border-color: #c084fc;
+      color: #3b0764;
+    }
+
+    /* Section Category Headers */
+    .domain-section {
+      margin-bottom: 2.5rem;
+    }
+
+    .domain-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.25rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .domain-header-left {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .domain-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    .domain-header h2 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+
+    .domain-header p {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    /* Endpoint Card UI */
+    .endpoint-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      margin-bottom: 0.85rem;
+      overflow: hidden;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .endpoint-card:hover {
+      border-color: var(--border-highlight);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+    }
+
+    .endpoint-summary {
+      padding: 1rem 1.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      gap: 1rem;
+      user-select: none;
+    }
+
+    .endpoint-meta {
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    .method-badge {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 0.25rem 0.6rem;
+      border-radius: var(--radius-sm);
+      text-transform: uppercase;
+      min-width: 65px;
+      text-align: center;
+      letter-spacing: 0.05em;
+    }
+
+    .method-get { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); }
+    .method-post { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+    .method-put { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
+    .method-delete { background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
+
+    .endpoint-path {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: var(--text-main);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .endpoint-path .param {
+      color: #93c5fd;
+    }
+
+    .endpoint-title {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-left: 0.5rem;
+    }
+
+    .endpoint-badges {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .auth-badge {
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 0.2rem 0.55rem;
+      border-radius: var(--radius-full);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      letter-spacing: 0.02em;
+    }
+
+    .badge-public {
+      background: var(--color-public-bg);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .badge-client {
+      background: var(--color-client-bg);
+      color: #38bdf8;
+      border: 1px solid rgba(6, 182, 212, 0.3);
+    }
+
+    .badge-admin {
+      background: var(--color-admin-bg);
+      color: #c084fc;
+      border: 1px solid rgba(168, 85, 247, 0.3);
+    }
+
+    .badge-webhook {
+      background: var(--color-webhook-bg);
+      color: #fbbf24;
+      border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+
+    .expand-chevron {
+      width: 18px;
+      height: 18px;
+      color: var(--text-faint);
+      transition: transform 0.2s ease;
+    }
+
+    .endpoint-card.expanded .expand-chevron {
+      transform: rotate(180deg);
+      color: var(--text-main);
+    }
+
+    /* Endpoint Details Drawer */
+    .endpoint-details {
+      display: none;
+      padding: 1.25rem;
+      background: rgba(11, 16, 27, 0.7);
+      border-top: 1px solid var(--border-subtle);
+      animation: fadeIn 0.2s ease;
+    }
+
+    .endpoint-card.expanded .endpoint-details {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .details-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.25rem;
+    }
+
+    @media (max-width: 900px) {
+      .details-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .section-block {
+      background: var(--bg-surface-elevated);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      padding: 1rem;
+    }
+
+    .section-block-title {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--text-faint);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .auth-spec-box {
+      background: rgba(255, 255, 255, 0.02);
+      border-left: 3px solid #3b82f6;
+      padding: 0.75rem;
+      border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+      margin-bottom: 1rem;
+      font-size: 0.8rem;
+    }
+
+    .auth-spec-box.spec-public { border-color: var(--color-public); }
+    .auth-spec-box.spec-client { border-color: var(--color-client); }
+    .auth-spec-box.spec-admin { border-color: var(--color-admin); }
+
+    .code-preview-wrap {
+      position: relative;
+    }
+
+    pre.code-block {
+      background: #060911;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: var(--radius-sm);
+      padding: 0.85rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.78rem;
+      color: #e2e8f0;
+      overflow-x: auto;
+      line-height: 1.6;
+    }
+
+    .copy-btn {
+      position: absolute;
+      top: 0.5rem;
+      right: 0.5rem;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: var(--text-muted);
+      border-radius: var(--radius-sm);
+      padding: 0.25rem 0.55rem;
+      font-size: 0.7rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .copy-btn:hover {
+      background: rgba(255, 255, 255, 0.2);
+      color: #fff;
+    }
+
+    .copy-btn.copied {
+      background: #10b981;
+      color: #064e3b;
+      border-color: #34d399;
+    }
+
+    /* Parameters Table */
+    table.params-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.78rem;
+    }
+
+    table.params-table th {
+      text-align: left;
+      padding: 0.5rem;
+      color: var(--text-faint);
+      border-bottom: 1px solid var(--border-subtle);
+      font-weight: 600;
+      font-size: 0.72rem;
+      text-transform: uppercase;
+    }
+
+    table.params-table td {
+      padding: 0.6rem 0.5rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      vertical-align: top;
+    }
+
+    .param-name {
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 600;
+      color: #93c5fd;
+    }
+
+    .param-type {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.7rem;
+      color: var(--text-faint);
+      background: rgba(255, 255, 255, 0.05);
+      padding: 0.1rem 0.35rem;
+      border-radius: 4px;
+    }
+
+    .param-req {
+      color: #f87171;
+      font-size: 0.7rem;
+      font-weight: 700;
+      margin-left: 0.2rem;
+    }
+
+    /* Live Tester Mini Bar */
+    .test-actions-bar {
+      margin-top: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 0.75rem;
+    }
+
+    /* Empty state */
+    .empty-state {
+      text-align: center;
+      padding: 4rem 2rem;
+      color: var(--text-muted);
+    }
+    .empty-state h3 {
+      font-size: 1.25rem;
+      margin-bottom: 0.5rem;
+      color: var(--text-main);
+    }
+
+    /* Mobile Responsive */
+    @media (max-width: 768px) {
+      .app-container {
+        grid-template-columns: 1fr;
+      }
+      aside.sidebar {
+        display: none;
+      }
+      main.content {
+        padding: 1.25rem;
+      }
+      header.top-nav {
+        padding: 0.75rem 1rem;
+      }
+      .header-stats {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="ambient-glow"></div>
+
+  <!-- Top Sticky Navbar -->
+  <header class="top-nav">
+    <div class="brand-section">
+      <div class="brand-badge">RH</div>
+      <div class="brand-title">
+        <h1>RentHub API <span class="version-tag">v2.4 LTS</span></h1>
+        <p>Enterprise Asset Rental Engine & Auth Matrix</p>
+      </div>
+    </div>
+
+    <!-- Live Platform Statistics -->
+    <div class="header-stats">
+      <div class="stat-pill pub">
+        <span class="indicator"></span>
+        <span>Public: <strong>21</strong></span>
+      </div>
+      <div class="stat-pill cli">
+        <span class="indicator"></span>
+        <span>Client Auth: <strong>26</strong></span>
+      </div>
+      <div class="stat-pill adm">
+        <span class="indicator"></span>
+        <span>Admin Auth: <strong>54</strong></span>
+      </div>
+      <div class="stat-pill">
+        <span>Total: <strong id="total-badge-count">106</strong></span>
+      </div>
+    </div>
+
+    <div class="header-actions">
+      <a href="/rentals" class="btn-action" target="_blank">
+        <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+        Client App
+      </a>
+      <a href="/admin" class="btn-action btn-primary-action" target="_blank">
+        <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+        Admin Console
+      </a>
+    </div>
+  </header>
+
+  <div class="app-container">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+      <div>
+        <div class="sidebar-section-title">API Groups</div>
+        <ul class="nav-list" id="sidebar-nav">
+          <li><a href="#group-auth" class="nav-item active"><span>🔐 Authentication & Profile</span> <span class="count-badge">7</span></a></li>
+          <li><a href="#group-catalog" class="nav-item"><span>📦 Public Asset Discovery</span> <span class="count-badge">14</span></a></li>
+          <li><a href="#group-lifecycle" class="nav-item"><span>📋 Customer Rental Flow</span> <span class="count-badge">23</span></a></li>
+          <li><a href="#group-admin-assets" class="nav-item"><span>🏷️ Admin Fleet & Catalog</span> <span class="count-badge">26</span></a></li>
+          <li><a href="#group-admin-ops" class="nav-item"><span>⚡ Admin Operations & QA</span> <span class="count-badge">31</span></a></li>
+          <li><a href="#group-system" class="nav-item"><span>⚙️ Webhooks & Internal</span> <span class="count-badge">5</span></a></li>
+        </ul>
+      </div>
+
+      <div>
+        <div class="sidebar-section-title">Security & Session Spec</div>
+        <div style="font-size: 0.78rem; color: var(--text-muted); line-height: 1.5; padding: 0.5rem;">
+          <div style="margin-bottom: 0.6rem;">
+            <strong style="color: var(--color-client);">Client Session:</strong><br>
+            Cookie: <code>renthub_client_session</code><br>
+            Lifespan: 24h &bull; Role: <code>client</code>
+          </div>
+          <div>
+            <strong style="color: var(--color-admin);">Admin Session:</strong><br>
+            Cookie: <code>renthub_admin_session</code><br>
+            Lifespan: 8h &bull; Role: <code>admin</code>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="content">
+      <!-- Search & Filters Banner -->
+      <section class="controls-banner">
+        <div class="search-row">
+          <div class="search-input-wrapper">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+            <input type="text" id="api-search" class="search-input" placeholder="Search by route path, title, method or parameter (e.g. /approve, quote, payment, handover)...">
+          </div>
+        </div>
+
+        <div class="filter-pills-row">
+          <div class="filter-group">
+            <span class="filter-label">Auth Level:</span>
+            <button class="pill-btn active" data-auth="all">All (<span id="count-all">106</span>)</button>
+            <button class="pill-btn pill-public" data-auth="public">🟢 Public (<span id="count-pub">21</span>)</button>
+            <button class="pill-btn pill-client" data-auth="client">🔵 Client Auth (<span id="count-cli">26</span>)</button>
+            <button class="pill-btn pill-admin" data-auth="admin">🔴 Admin Auth (<span id="count-adm">54</span>)</button>
+          </div>
+
+          <div class="filter-group">
+            <span class="filter-label">HTTP Method:</span>
+            <button class="pill-btn active" data-method="all">ANY</button>
+            <button class="pill-btn" data-method="GET">GET</button>
+            <button class="pill-btn" data-method="POST">POST</button>
+            <button class="pill-btn" data-method="PUT">PUT</button>
+            <button class="pill-btn" data-method="DELETE">DELETE</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Containers for Rendered Endpoints -->
+      <div id="endpoints-container">
+        <!-- Rendered dynamically via JavaScript -->
+      </div>
+
+      <div id="no-results" class="empty-state" style="display: none;">
+        <h3>No matching endpoints found</h3>
+        <p>Try clearing your search query or switching the authentication and method filters above.</p>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // Master API Catalog Dataset
+    const apiEndpoints = [
+      // 1. Authentication & Session
+      {
+        id: "auth-1",
+        group: "group-auth",
+        groupTitle: "Authentication & Profile",
+        method: "POST",
+        path: "/api/auth/login",
+        title: "Client Portal Login",
+        authLevel: "public",
+        role: "None",
+        cookie: "None",
+        desc: "Authenticates customer client account. Sets HTTP-only 'renthub_client_session' cookie valid for 24 hours. Prevents administrator accounts from logging into customer portal.",
+        params: [],
+        bodySample: {
+          email: "you@renthub.app",
+          password: "RenterPassword123!"
+        },
+        responseSample: {
+          ok: true,
+          user: {
+            id: "usr_client_01",
+            email: "you@renthub.app",
+            name: "You (Demo)",
+            role: "client"
+          }
+        }
+      },
+      {
+        id: "auth-2",
+        group: "group-auth",
+        groupTitle: "Authentication & Profile",
+        method: "POST",
+        path: "/api/auth/register",
+        title: "Client Registration",
+        authLevel: "public",
+        role: "None",
+        cookie: "None",
+        desc: "Registers a new customer client account with salted scrypt password hashing.",
+        bodySample: {
+          email: "newuser@example.com",
+          name: "Sophea Chan",
+          password: "StrongPassword2026!"
+        },
+        responseSample: {
+          ok: true,
+          user: { id: "usr_client_02", email: "newuser@example.com", role: "client" }
+        }
+      },
+      {
+        id: "auth-3",
+        group: "group-auth",
+        groupTitle: "Authentication & Profile",
+        method: "POST",
+        path: "/api/auth/logout",
+        title: "Logout & Session Clearance",
+        authLevel: "public",
+        role: "Any",
+        cookie: "Clears renthub_client_session, renthub_admin_session",
+        desc: "Invalidates and clears client and admin HTTP-only session cookies.",
+        bodySample: {},
+        responseSample: { ok: true, message: "Logged out successfully" }
+      },
+      {
+        id: "auth-4",
+        group: "group-auth",
+        groupTitle: "Authentication & Profile",
+        method: "POST",
+        path: "/api/admin/login",
+        title: "Administrator Portal Login",
+        authLevel: "public",
+        role: "None",
+        cookie: "None",
+        desc: "Authenticates system administrators. Sets HTTP-only 'renthub_admin_session' cookie valid for 8 hours. Rejects non-admin users with 403 FORBIDDEN.",
+        bodySample: {
+          username: "admin@renthub.app",
+          password: "AdminSecurePassword123!"
+        },
+        responseSample: {
+          ok: true,
+          user: { id: "usr_admin_01", email: "admin@renthub.app", role: "admin" }
+        }
+      },
+      {
+        id: "auth-5",
+        group: "group-auth",
+        groupTitle: "Authentication & Profile",
+        method: "GET",
+        path: "/api/me",
+        title: "Current Client User Profile",
+        authLevel: "client",
+        role: "client",
+        cookie: "renthub_client_session",
+        desc: "Fetches current authenticated client profile. Returns 401 SESSION_EXPIRED if the 24-hour token has lapsed.",
+        responseSample: {
+          user: {
+            id: "usr_client_01",
+            email: "you@renthub.app",
+            name: "You (Demo)",
+            phone: "+855 12 345 678",
+            role: "client"
+          }
+        }
+      },
+      {
+        id: "auth-6",
+        group: "group-auth",
+        groupTitle: "Authentication & Profile",
+        method: "PUT",
+        path: "/api/me",
+        title: "Update Client Profile",
+        authLevel: "client",
+        role: "client",
+        cookie: "renthub_client_session",
+        desc: "Updates name, phone, bio, and avatar for current client.",
+        bodySample: {
+          name: "Sophea Chan",
+          phone: "+855 99 888 777",
+          bio: "Independent Film Director & Producer"
+        },
+        responseSample: { ok: true }
+      },
+      {
+        id: "auth-7",
+        group: "group-auth",
+        groupTitle: "Authentication & Profile",
+        method: "GET",
+        path: "/api/admin/me",
+        title: "Current Admin Session Info",
+        authLevel: "admin",
+        role: "admin",
+        cookie: "renthub_admin_session",
+        desc: "Returns active administrator credentials and assigned staff permissions.",
+        responseSample: {
+          user: { id: "usr_admin_01", email: "admin@renthub.app", role: "admin" }
+        }
+      },
+
+      // 2. Public Asset Catalog & Discovery
+      {
+        id: "cat-1",
+        group: "group-catalog",
+        groupTitle: "Public Asset Discovery",
+        method: "GET",
+        path: "/api/rental-assets",
+        title: "Commercial Rental Assets Catalog",
+        authLevel: "public",
+        role: "None",
+        cookie: "None",
+        desc: "Queries commercial equipment listings with live rate cards, policy details, and real-time available unit counts.",
+        params: [
+          { name: "category", type: "string", req: false, desc: "Filter by category slug or ID" },
+          { name: "search", type: "string", req: false, desc: "Text search matching title, model or specs" },
+          { name: "pickupLocation", type: "string", req: false, desc: "Filter by location ID" }
+        ],
+        responseSample: {
+          assets: [
+            {
+              id: "ast_macbook_pro_16",
+              code: "TO-MAC-01",
+              name: "Apple MacBook Pro 16\" M3 Max",
+              slug: "apple-macbook-pro-16-m3-max",
+              coverImage: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8",
+              rates: [{ billingUnit: "DAY", rateAmount: 45.0, currency: "USD" }],
+              rentalPolicy: { securityDeposit: 500.0, minimumDuration: 1 },
+              availableUnitsCount: 4
+            }
+          ]
+        }
+      },
+      {
+        id: "cat-2",
+        group: "group-catalog",
+        groupTitle: "Public Asset Discovery",
+        method: "POST",
+        path: "/api/rental-assets/[id]/quote-preview",
+        title: "Commercial Quote Calculator Preview",
+        authLevel: "public",
+        role: "None",
+        cookie: "None",
+        desc: "Computes financial quote including base rental, security deposit, delivery fee, and applicable tax without persisting records.",
+        bodySample: {
+          startAt: "2026-11-01T09:00:00Z",
+          endAt: "2026-11-05T18:00:00Z",
+          quantity: 2,
+          fulfillment: "DELIVERY",
+          deliveryAddress: { city: "Phnom Penh" }
+        },
+        responseSample: {
+          currency: "USD",
+          rentalDays: 5,
+          quantity: 2,
+          unitRate: 45.0,
+          rentalSubtotal: 450.0,
+          securityDeposit: 1000.0,
+          deliveryFee: 15.0,
+          estimatedTax: 0.0,
+          totalPayable: 1465.0,
+          contingentLateFee: 60.0
+        }
+      },
+      {
+        id: "cat-3",
+        group: "group-catalog",
+        groupTitle: "Public Asset Discovery",
+        method: "GET",
+        path: "/api/rental-assets/[id]/availability-check",
+        title: "Date Window Availability Checker",
+        authLevel: "public",
+        role: "None",
+        cookie: "None",
+        desc: "Checks physical units count against active holds and blackout intervals for given date range.",
+        params: [
+          { name: "startAt", type: "ISO-8601", req: true, desc: "Requested start datetime" },
+          { name: "endAt", type: "ISO-8601", req: true, desc: "Requested end datetime" },
+          { name: "quantity", type: "number", req: false, desc: "Units needed (default: 1)" }
+        ],
+        responseSample: {
+          available: true,
+          requestedQuantity: 1,
+          availableQuantity: 4,
+          unitOptions: ["TO-LAP-0001", "TO-LAP-0002"]
+        }
+      },
+      {
+        id: "cat-4",
+        group: "group-catalog",
+        groupTitle: "Public Asset Discovery",
+        method: "GET",
+        path: "/api/rental-assets/[id]/alternative-slots",
+        title: "Alternative Available Date Suggestion",
+        authLevel: "public",
+        role: "None",
+        cookie: "None",
+        desc: "When an asset is fully booked for requested dates, suggests adjacent alternative open booking slots.",
+        responseSample: {
+          suggestedSlots: [
+            { startAt: "2026-11-07T09:00:00Z", endAt: "2026-11-11T18:00:00Z", availableUnits: 2 }
+          ]
+        }
+      },
+      {
+        id: "cat-5",
+        group: "group-catalog",
+        groupTitle: "Public Asset Discovery",
+        method: "GET",
+        path: "/api/categories",
+        title: "Hierarchical Category Tree",
+        authLevel: "public",
+        role: "None",
+        cookie: "None",
+        desc: "Returns nested tree of active catalog categories with item counts and display colors.",
+        responseSample: {
+          categories: [
+            { id: "cat_it", name: "IT & Computing", slug: "it-computing", children: [] }
+          ]
+        }
+      },
+      {
+        id: "cat-6",
+        group: "group-catalog",
+        groupTitle: "Public Asset Discovery",
+        method: "GET",
+        path: "/api/stats",
+        title: "Platform Overview Statistics",
+        authLevel: "public",
+        role: "None",
+        cookie: "None",
+        desc: "Returns public fleet counters, category counts, and verified reviews count.",
+        responseSample: { totalListings: 48, activeUnits: 185, categoriesCount: 12 }
+      },
+
+      // 3. Customer Rental Lifecycle
+      {
+        id: "life-1",
+        group: "group-lifecycle",
+        groupTitle: "Customer Rental Lifecycle",
+        method: "POST",
+        path: "/api/me/rental-requests",
+        title: "Submit Commercial Rental Request (Step 03)",
+        authLevel: "client",
+        role: "client",
+        cookie: "renthub_client_session",
+        desc: "Submits formal commercial rental request. Freezes rates into immutable RentalQuoteSnapshot and logs acceptance of terms.",
+        bodySample: {
+          listingId: "ast_macbook_pro_16",
+          startAt: "2026-11-01T09:00:00.000Z",
+          endAt: "2026-11-05T18:00:00.000Z",
+          quantity: 1,
+          fulfillment: "PICKUP",
+          pickupLocationId: "loc_phnom_penh_hq",
+          contactName: "John Doe",
+          contactPhone: "+855 12 345 678",
+          contactEmail: "john@example.com",
+          termsAccepted: true
+        },
+        responseSample: {
+          ok: true,
+          requestId: "req_2026_001",
+          requestNo: "REQ-2026-000001",
+          status: "PENDING_APPROVAL"
+        }
+      },
+      {
+        id: "life-2",
+        group: "group-lifecycle",
+        groupTitle: "Customer Rental Lifecycle",
+        method: "GET",
+        path: "/api/me/rental-requests",
+        title: "List Client Rental Requests",
+        authLevel: "client",
+        role: "client",
+        cookie: "renthub_client_session",
+        desc: "Lists all rental requests submitted by current user with status filter.",
+        params: [{ name: "status", type: "string", req: false, desc: "PENDING_APPROVAL, APPROVED_AWAITING_PAYMENT, etc." }],
+        responseSample: {
+          requests: [
+            { id: "req_2026_001", requestNo: "REQ-2026-000001", status: "PENDING_APPROVAL", totalPayable: 725.0 }
+          ]
+        }
+      },
+      {
+        id: "life-3",
+        group: "group-lifecycle",
+        groupTitle: "Customer Rental Lifecycle",
+        method: "GET",
+        path: "/api/me/rental-requests/[id]/payment-summary",
+        title: "Payment Order Summary (Step 05)",
+        authLevel: "client",
+        role: "client",
+        cookie: "renthub_client_session",
+        desc: "Returns breakdown of rental charges, refundable deposit, delivery fee, and payment due deadline.",
+        responseSample: {
+          order: {
+            id: "pay_order_01",
+            status: "UNPAID",
+            rental_charges: { subtotal_due: 225.0 },
+            refundable_deposit: { amount: 500.0 },
+            total_due: 725.0,
+            due_at: "2026-10-23T15:00:00.000Z"
+          },
+          supported_methods: ["KHQR", "CARD", "CASH", "BANK_TRANSFER"]
+        }
+      },
+      {
+        id: "life-4",
+        group: "group-lifecycle",
+        groupTitle: "Customer Rental Lifecycle",
+        method: "POST",
+        path: "/api/me/rental-requests/[id]/payment-attempts",
+        title: "Submit Payment Attempt (Step 05)",
+        authLevel: "client",
+        role: "client",
+        cookie: "renthub_client_session",
+        desc: "Processes payment attempt. Supports Cash, KHQR, Bank Transfer slip, or Card.",
+        bodySample: {
+          method: "CASH",
+          amount: 725.0,
+          providerReference: "Cash payable at counter"
+        },
+        responseSample: {
+          ok: true,
+          attemptId: "att_01",
+          status: "PROCESSING",
+          message: "Payment recorded. Awaiting warehouse counter cashier verification."
+        }
+      },
+      {
+        id: "life-5",
+        group: "group-lifecycle",
+        groupTitle: "Customer Rental Lifecycle",
+        method: "GET",
+        path: "/api/me/rentals",
+        title: "Active & Upcoming Rentals (Step 06 & 08)",
+        authLevel: "client",
+        role: "client",
+        cookie: "renthub_client_session",
+        desc: "Fetches active and confirmed bookings for the client with assigned equipment tags.",
+        responseSample: {
+          reservations: [
+            {
+              id: "res_01",
+              bookingNo: "BK-2026-000001",
+              status: "ACTIVE",
+              startAt: "2026-10-20T09:00:00Z",
+              endAt: "2026-10-25T18:00:00Z",
+              allocatedUnits: ["TO-LAP-0001"]
+            }
+          ]
+        }
+      },
+      {
+        id: "life-6",
+        group: "group-lifecycle",
+        groupTitle: "Customer Rental Lifecycle",
+        method: "POST",
+        path: "/api/me/rentals/[id]/extensions",
+        title: "Request Rental Extension (Step 08)",
+        authLevel: "client",
+        role: "client",
+        cookie: "renthub_client_session",
+        desc: "Customer submits request to extend active rental period.",
+        bodySample: {
+          requestedEndAt: "2026-10-28T18:00:00.000Z",
+          additionalDays: 3
+        },
+        responseSample: {
+          ok: true,
+          extensionId: "ext_01",
+          additionalCharge: 135.0,
+          status: "PENDING"
+        }
+      },
+      {
+        id: "life-7",
+        group: "group-lifecycle",
+        groupTitle: "Customer Rental Lifecycle",
+        method: "POST",
+        path: "/api/me/rentals/[id]/incidents",
+        title: "Report Malfunction or Incident (Step 08)",
+        authLevel: "client",
+        role: "client",
+        cookie: "renthub_client_session",
+        desc: "Reports hardware malfunction, physical defect, or accidental damage during rental.",
+        bodySample: {
+          category: "MALFUNCTION",
+          severity: "MEDIUM",
+          description: "Display backlight flickers when moved past 90 degrees."
+        },
+        responseSample: { ok: true, incidentId: "inc_01", status: "OPEN" }
+      },
+      {
+        id: "life-8",
+        group: "group-lifecycle",
+        groupTitle: "Customer Rental Lifecycle",
+        method: "POST",
+        path: "/api/me/rentals/[id]/returns",
+        title: "Schedule Return Drop-Off (Step 09)",
+        authLevel: "client",
+        role: "client",
+        cookie: "renthub_client_session",
+        desc: "Schedules physical return drop-off time at warehouse location.",
+        bodySample: {
+          scheduledAt: "2026-10-25T16:00:00.000Z",
+          returnLocationId: "loc_phnom_penh_hq"
+        },
+        responseSample: { ok: true, returnCaseId: "ret_case_01", status: "SCHEDULED" }
+      },
+      {
+        id: "life-9",
+        group: "group-lifecycle",
+        groupTitle: "Customer Rental Lifecycle",
+        method: "GET",
+        path: "/api/me/rentals/[id]/settlement",
+        title: "Deposit Settlement Statement (Step 10)",
+        authLevel: "client",
+        role: "client",
+        cookie: "renthub_client_session",
+        desc: "View breakdown of security deposit liquidation, deductions (if any), and net refund amount.",
+        responseSample: {
+          settlement: {
+            depositHeld: 500.0,
+            lateFee: 0.0,
+            damageFee: 0.0,
+            cleaningFee: 0.0,
+            netRefundAmount: 500.0,
+            status: "REFUNDED"
+          }
+        }
+      },
+
+      // 4. Admin Fleet & Catalog Management
+      {
+        id: "adm-cat-1",
+        group: "group-admin-assets",
+        groupTitle: "Admin Fleet & Catalog",
+        method: "GET",
+        path: "/api/admin/assets",
+        title: "List All Fleet Listings",
+        authLevel: "admin",
+        role: "admin",
+        cookie: "renthub_admin_session",
+        desc: "Fetches complete listing catalog including drafts, published, unpublished, and archived items with unit counts.",
+        responseSample: {
+          listings: [{ id: "ast_1", name: "Apple MacBook Pro 16", visibility: "PUBLISHED", totalUnits: 4 }]
+        }
+      },
+      {
+        id: "adm-cat-2",
+        group: "group-admin-assets",
+        groupTitle: "Admin Fleet & Catalog",
+        method: "POST",
+        path: "/api/admin/assets",
+        title: "Create New Asset Listing",
+        authLevel: "admin",
+        role: "admin",
+        cookie: "renthub_admin_session",
+        desc: "Creates a new asset listing with rate rules, rental policy, and location availability options.",
+        bodySample: {
+          name: "Sony Alpha A7 IV",
+          code: "TO-CAM-01",
+          categoryId: "cat_cameras",
+          shortDescription: "Full-frame 33MP Hybrid Camera",
+          coverImage: "https://...",
+          rates: [{ billingUnit: "DAY", rateAmount: 35.0 }],
+          rentalPolicy: { securityDeposit: 300.0, minimumDuration: 1 }
+        },
+        responseSample: { ok: true, listingId: "ast_sony_a7iv" }
+      },
+      {
+        id: "adm-cat-3",
+        group: "group-admin-assets",
+        groupTitle: "Admin Fleet & Catalog",
+        method: "POST",
+        path: "/api/admin/assets/[id]/units",
+        title: "Register Serialized Physical Unit",
+        authLevel: "admin",
+        role: "admin",
+        cookie: "renthub_admin_session",
+        desc: "Adds a serialized barcoded physical unit to an asset's fleet.",
+        bodySample: {
+          assetTag: "TO-CAM-0001",
+          serialNumber: "SN-SNY-998822",
+          locationId: "loc_phnom_penh_hq",
+          conditionGrade: "NEW",
+          accessories: "Battery, Strap, 64GB SD Card"
+        },
+        responseSample: { ok: true, unitId: "unt_01", assetTag: "TO-CAM-0001" }
+      },
+      {
+        id: "adm-cat-4",
+        group: "group-admin-assets",
+        groupTitle: "Admin Fleet & Catalog",
+        method: "POST",
+        path: "/api/admin/assets/[id]/publish",
+        title: "Publish Listing to Public",
+        authLevel: "admin",
+        role: "admin",
+        cookie: "renthub_admin_session",
+        desc: "Transitions listing visibility to PUBLISHED. Makes visible in customer search.",
+        responseSample: { ok: true, visibility: "PUBLISHED" }
+      },
+      {
+        id: "adm-cat-5",
+        group: "group-admin-assets",
+        groupTitle: "Admin Fleet & Catalog",
+        method: "POST",
+        path: "/api/admin/assets/[id]/blocks",
+        title: "Create Blackout / Maintenance Block",
+        authLevel: "admin",
+        role: "admin",
+        cookie: "renthub_admin_session",
+        desc: "Blocks specific physical unit or entire listing from bookings for scheduled maintenance.",
+        bodySample: {
+          unitId: "unt_01",
+          startAt: "2026-11-15T00:00:00Z",
+          endAt: "2026-11-18T00:00:00Z",
+          reason: "Annual Optical Sensor Calibration"
+        },
+        responseSample: { ok: true, blockId: "blk_01" }
+      },
+
+      // 5. Admin Operations & Workflow
+      {
+        id: "adm-ops-1",
+        group: "group-admin-ops",
+        groupTitle: "Admin Operations & Workflow",
+        method: "POST",
+        path: "/api/admin/rental-requests/[id]/approve",
+        title: "Approve Request & Lock Inventory (Step 04)",
+        authLevel: "admin",
+        role: "admin",
+        cookie: "renthub_admin_session",
+        desc: "Approves customer rental request. Spawns RentalInventoryHold locking serialized units until payment deadline.",
+        bodySample: {
+          allocatedUnitIds: ["unt_01"],
+          holdDurationHours: 24,
+          internalNotes: "Standard approval. Hardware verified in stock."
+        },
+        responseSample: {
+          ok: true,
+          status: "APPROVED_AWAITING_PAYMENT",
+          paymentDueAt: "2026-10-23T15:00:00.000Z",
+          holdId: "hld_01"
+        }
+      },
+      {
+        id: "adm-ops-2",
+        group: "group-admin-ops",
+        groupTitle: "Admin Operations & Workflow",
+        method: "POST",
+        path: "/api/admin/rental-requests/[id]/reject",
+        title: "Reject Rental Request (Step 04)",
+        authLevel: "admin",
+        role: "admin",
+        cookie: "renthub_admin_session",
+        desc: "Rejects rental request with standardized reason code and customer notification.",
+        bodySample: {
+          reasonCode: "INVENTORY_UNAVAILABLE",
+          publicReason: "Selected camera bodies are booked for maintenance calibration during these dates."
+        },
+        responseSample: { ok: true, status: "REJECTED" }
+      },
+      {
+        id: "adm-ops-3",
+        group: "group-admin-ops",
+        groupTitle: "Admin Operations & Workflow",
+        method: "POST",
+        path: "/api/admin/handovers/[reservationId]/finalize",
+        title: "Dispatch Equipment & Finalize Handover (Step 07)",
+        authLevel: "admin",
+        role: "admin",
+        cookie: "renthub_admin_session",
+        desc: "Records physical handover. Verifies scanned tags, condition grades, records digital signature, and shifts reservation to ACTIVE.",
+        bodySample: {
+          receiverName: "John Doe",
+          signature: "data:image/svg+xml;base64,...",
+          scannedUnits: [
+            {
+              unitId: "unt_01",
+              scannedTag: "TO-LAP-0001",
+              conditionGrade: "EXCELLENT",
+              functionalCheck: "PASS"
+            }
+          ]
+        },
+        responseSample: { ok: true, handoverId: "hnd_01", reservationStatus: "ACTIVE" }
+      },
+      {
+        id: "adm-ops-4",
+        group: "group-admin-ops",
+        groupTitle: "Admin Operations & Workflow",
+        method: "POST",
+        path: "/api/admin/returns/[returnId]/confirm-receipt",
+        title: "Confirm Physical Receipt of Return (Step 09)",
+        authLevel: "admin",
+        role: "admin",
+        cookie: "renthub_admin_session",
+        desc: "Warehouse dock confirms hardware physical arrival and issues ReturnReceipt (RET-*).",
+        bodySample: {
+          receivingStaffName: "Warehouse Team Beta",
+          totalUnitsReceived: 1,
+          discrepancyNotes: "All cables present in bag."
+        },
+        responseSample: { ok: true, receiptNo: "RET-2026-000001", status: "RECEIVED" }
+      },
+      {
+        id: "adm-ops-5",
+        group: "group-admin-ops",
+        groupTitle: "Admin Operations & Workflow",
+        method: "POST",
+        path: "/api/admin/inspections/[id]/complete",
+        title: "Complete QA Inspection & Assess Damages (Step 10)",
+        authLevel: "admin",
+        role: "admin",
+        cookie: "renthub_admin_session",
+        desc: "Finalizes technical post-rental inspection. Evaluates functional status, assesses repair fees, and creates settlement statement.",
+        bodySample: {
+          verdict: "PASS",
+          items: [
+            {
+              unitId: "unt_01",
+              conditionGrade: "GOOD",
+              functionalResult: "PASS",
+              estimatedRepairCost: 0.0,
+              disposition: "AVAILABLE"
+            }
+          ]
+        },
+        responseSample: { ok: true, verdict: "PASS", netRefundDue: 500.0, settlementId: "stl_01" }
+      },
+      {
+        id: "adm-ops-6",
+        group: "group-admin-ops",
+        groupTitle: "Admin Operations & Workflow",
+        method: "POST",
+        path: "/api/admin/settlements/[id]/approve",
+        title: "Approve Deposit Refund & Liquidation (Step 10)",
+        authLevel: "admin",
+        role: "admin",
+        cookie: "renthub_admin_session",
+        desc: "Finance approves deposit ledger liquidation and triggers refund wire to customer.",
+        bodySample: {
+          approvedNotes: "Verified zero damages. Authorized 100% refund."
+        },
+        responseSample: { ok: true, status: "REFUNDED" }
+      },
+      {
+        id: "adm-ops-7",
+        group: "group-admin-ops",
+        groupTitle: "Admin Operations & Workflow",
+        method: "POST",
+        path: "/api/admin/rentals/[id]/close",
+        title: "Close Rental Contract (Step 11)",
+        authLevel: "admin",
+        role: "admin",
+        cookie: "renthub_admin_session",
+        desc: "Archives completed rental contract, generates immutable final summary, and marks fleet units as available.",
+        responseSample: { ok: true, finalStatus: "COMPLETED", closureId: "cls_01" }
+      },
+      {
+        id: "adm-ops-8",
+        group: "group-admin-ops",
+        groupTitle: "Admin Operations & Workflow",
+        method: "POST",
+        path: "/api/admin/payments/[id]/verify-manual",
+        title: "Verify Cash or Bank Transfer Payment",
+        authLevel: "admin",
+        role: "admin",
+        cookie: "renthub_admin_session",
+        desc: "Admin cashier confirms physical cash payment at counter or approves wire transfer slip. Transitions order to PAID and issues REC-* receipt.",
+        responseSample: { ok: true, paymentStatus: "PAID", receiptNo: "REC-2026-000001" }
+      },
+      {
+        id: "adm-ops-9",
+        group: "group-admin-ops",
+        groupTitle: "Admin Operations & Workflow",
+        method: "GET",
+        path: "/api/admin/stats",
+        title: "Executive KPI Dashboard Metrics",
+        authLevel: "admin",
+        role: "admin",
+        cookie: "renthub_admin_session",
+        desc: "Returns operational revenue, fleet utilization rates, pending approval counts, and overdue equipment alerts.",
+        responseSample: {
+          activeRentalsCount: 14,
+          pendingApprovals: 3,
+          revenueMtd: 14250.0,
+          utilizationRate: 78.4
+        }
+      },
+
+      // 6. Webhooks & Internal System
+      {
+        id: "sys-1",
+        group: "group-system",
+        groupTitle: "Webhooks & System Integration",
+        method: "POST",
+        path: "/api/payment-providers/[provider]/webhook",
+        title: "Payment Gateway Webhook Listener",
+        authLevel: "webhook",
+        role: "Gateway Signature",
+        cookie: "Header: x-provider-signature",
+        desc: "Receives asynchronous payment notifications from external gateways (e.g. Bakong KHQR, Stripe, Wing). Automatically finalizes booking reservation upon verified payment capture.",
+        bodySample: {
+          event: "payment.succeeded",
+          orderId: "pay_order_01",
+          amount: 725.0,
+          currency: "USD",
+          gatewayTxnId: "TXN_BK_99812739"
+        },
+        responseSample: { received: true, reservationId: "res_01" }
+      },
+      {
+        id: "sys-2",
+        group: "group-system",
+        groupTitle: "Webhooks & System Integration",
+        method: "POST",
+        path: "/api/internal/rental-reservations/finalize/[id]",
+        title: "Automated Reservation Finalization",
+        authLevel: "internal",
+        role: "Internal Service Token",
+        cookie: "Header: x-internal-key",
+        desc: "Converts paid rental order into confirmed reservation and generates warehouse staging task.",
+        responseSample: { ok: true, bookingNo: "BK-2026-000001" }
+      }
+    ];
+
+    // State Variables
+    let activeAuthFilter = "all";
+    let activeMethodFilter = "all";
+    let searchQuery = "";
+
+    // DOM Elements
+    const endpointsContainer = document.getElementById("endpoints-container");
+    const noResultsEl = document.getElementById("no-results");
+    const searchInput = document.getElementById("api-search");
+
+    // Render Endpoints Function
+    function renderEndpoints() {
+      endpointsContainer.innerHTML = "";
+      
+      // Filter list
+      const filtered = apiEndpoints.filter(item => {
+        // Auth filter
+        if (activeAuthFilter !== "all" && item.authLevel !== activeAuthFilter) {
+          return false;
+        }
+        // Method filter
+        if (activeMethodFilter !== "all" && item.method !== activeMethodFilter) {
+          return false;
+        }
+        // Search query
+        if (searchQuery) {
+          const q = searchQuery.toLowerCase();
+          const matchPath = item.path.toLowerCase().includes(q);
+          const matchTitle = item.title.toLowerCase().includes(q);
+          const matchDesc = item.desc.toLowerCase().includes(q);
+          const matchMethod = item.method.toLowerCase().includes(q);
+          if (!matchPath && !matchTitle && !matchDesc && !matchMethod) {
+            return false;
+          }
+        }
+        return true;
+      });
+
+      if (filtered.length === 0) {
+        noResultsEl.style.display = "block";
+        return;
+      }
+      noResultsEl.style.display = "none";
+
+      // Group filtered endpoints by group
+      const groups = {};
+      filtered.forEach(item => {
+        if (!groups[item.group]) {
+          groups[item.group] = {
+            id: item.group,
+            title: item.groupTitle,
+            items: []
+          };
+        }
+        groups[item.group].items.push(item);
+      });
+
+      // Render each group
+      Object.values(groups).forEach(group => {
+        const section = document.createElement("section");
+        section.className = "domain-section";
+        section.id = group.id;
+
+        section.innerHTML = `
+          <div class="domain-header">
+            <div class="domain-header-left">
+              <div class="domain-icon">⚡</div>
+              <div>
+                <h2>${group.title}</h2>
+                <p>${group.items.length} endpoint${group.items.length > 1 ? 's' : ''} in this group</p>
+              </div>
+            </div>
+          </div>
+          <div class="endpoints-list"></div>
+        `;
+
+        const listEl = section.querySelector(".endpoints-list");
+
+        group.items.forEach(ep => {
+          const card = document.createElement("div");
+          card.className = "endpoint-card";
+          card.id = `card-${ep.id}`;
+
+          // Format path with parameters highlighted
+          const formattedPath = ep.path.replace(/\[([^\]]+)\]/g, '<span class="param">:$1</span>');
+
+          // Badges
+          let authBadgeClass = "badge-public";
+          let authBadgeIcon = "🟢";
+          let authBadgeText = "Public (No Auth)";
+
+          if (ep.authLevel === "client") {
+            authBadgeClass = "badge-client";
+            authBadgeIcon = "🔵";
+            authBadgeText = "Client Auth Required";
+          } else if (ep.authLevel === "admin") {
+            authBadgeClass = "badge-admin";
+            authBadgeIcon = "🔴";
+            authBadgeText = "Admin Auth Required";
+          } else if (ep.authLevel === "webhook" || ep.authLevel === "internal") {
+            authBadgeClass = "badge-webhook";
+            authBadgeIcon = "🟡";
+            authBadgeText = ep.authLevel === "webhook" ? "Webhook Signature" : "Internal Token";
+          }
+
+          card.innerHTML = `
+            <div class="endpoint-summary" onclick="toggleCard('${card.id}')">
+              <div class="endpoint-meta">
+                <span class="method-badge method-${ep.method.toLowerCase()}">${ep.method}</span>
+                <span class="endpoint-path">${formattedPath}</span>
+                <span class="endpoint-title">${ep.title}</span>
+              </div>
+              <div class="endpoint-badges">
+                <span class="auth-badge ${authBadgeClass}">
+                  ${authBadgeIcon} ${authBadgeText}
+                </span>
+                <svg class="expand-chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                </svg>
+              </div>
+            </div>
+
+            <div class="endpoint-details">
+              <!-- Security Specs -->
+              <div class="auth-spec-box spec-${ep.authLevel}">
+                <strong>Security Requirements:</strong> ${ep.desc}
+                <div style="margin-top: 0.35rem; display: flex; gap: 1.5rem; flex-wrap: wrap;">
+                  <span><strong>Role:</strong> <code>${ep.role}</code></span>
+                  <span><strong>Cookie / Header:</strong> <code>${ep.cookie || 'None'}</code></span>
+                </div>
+              </div>
+
+              <div class="details-grid">
+                <!-- Request Payload / Params -->
+                <div class="section-block">
+                  <div class="section-block-title">
+                    <span>Request Specification</span>
+                    ${ep.bodySample ? '<span style="font-size:0.65rem; color:#94a3b8;">application/json</span>' : ''}
+                  </div>
+                  
+                  ${ep.params && ep.params.length > 0 ? `
+                    <div style="margin-bottom: 0.75rem;">
+                      <table class="params-table">
+                        <thead>
+                          <tr><th>Parameter</th><th>Type</th><th>Description</th></tr>
+                        </thead>
+                        <tbody>
+                          ${ep.params.map(p => `
+                            <tr>
+                              <td><span class="param-name">${p.name}</span> ${p.req ? '<span class="param-req">*</span>' : ''}</td>
+                              <td><span class="param-type">${p.type}</span></td>
+                              <td>${p.desc}</td>
+                            </tr>
+                          `).join('')}
+                        </tbody>
+                      </table>
+                    </div>
+                  ` : ''}
+
+                  ${ep.bodySample && Object.keys(ep.bodySample).length > 0 ? `
+                    <div class="code-preview-wrap">
+                      <button class="copy-btn" onclick="copySnippet(this, ${escapeSnippet(JSON.stringify(ep.bodySample, null, 2))})">Copy JSON</button>
+                      <pre class="code-block">${JSON.stringify(ep.bodySample, null, 2)}</pre>
+                    </div>
+                  ` : (ep.params && ep.params.length > 0 ? '' : '<p style="font-size:0.78rem; color:var(--text-faint);">No request body required.</p>')}
+                </div>
+
+                <!-- Response Sample -->
+                <div class="section-block">
+                  <div class="section-block-title">
+                    <span>Response Example</span>
+                    <span style="color:#10b981; font-weight:700;">200 OK</span>
+                  </div>
+                  <div class="code-preview-wrap">
+                    <button class="copy-btn" onclick="copySnippet(this, ${escapeSnippet(JSON.stringify(ep.responseSample, null, 2))})">Copy</button>
+                    <pre class="code-block">${JSON.stringify(ep.responseSample, null, 2)}</pre>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Action Bar with cURL Copy -->
+              <div class="test-actions-bar">
+                <button class="btn-action" onclick="copyCurlSnippet('${ep.method}', '${ep.path}', ${escapeSnippet(JSON.stringify(ep.bodySample || {}))}, '${ep.authLevel}')">
+                  <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                  Copy cURL
+                </button>
+              </div>
+            </div>
+          `;
+
+          listEl.appendChild(card);
+        });
+
+        endpointsContainer.appendChild(section);
+      });
+    }
+
+    // Toggle Card Accordion
+    function toggleCard(cardId) {
+      const card = document.getElementById(cardId);
+      if (card) {
+        card.classList.toggle("expanded");
+      }
+    }
+
+    // Helper to safely escape strings inside attributes
+    function escapeSnippet(str) {
+      return `'${str.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\n/g, '\\n')}'`;
+    }
+
+    // Copy Code Snippet
+    function copySnippet(btn, content) {
+      navigator.clipboard.writeText(content).then(() => {
+        const orig = btn.innerText;
+        btn.innerText = "Copied!";
+        btn.classList.add("copied");
+        setTimeout(() => {
+          btn.innerText = orig;
+          btn.classList.remove("copied");
+        }, 1800);
+      });
+    }
+
+    // Copy Executable cURL
+    function copyCurlSnippet(method, path, body, authLevel) {
+      let cookieHeader = "";
+      if (authLevel === "client") {
+        cookieHeader = " -H 'Cookie: renthub_client_session=<CLIENT_JWT_TOKEN>'";
+      } else if (authLevel === "admin") {
+        cookieHeader = " -H 'Cookie: renthub_admin_session=<ADMIN_JWT_TOKEN>'";
+      }
+
+      let dataPart = "";
+      if (method !== "GET" && body && Object.keys(body).length > 0) {
+        dataPart = ` -H 'Content-Type: application/json' -d '${JSON.stringify(body)}'`;
+      }
+
+      const curlCmd = `curl -X ${method} 'http://localhost:3000${path}'${cookieHeader}${dataPart}`;
+      navigator.clipboard.writeText(curlCmd).then(() => {
+        alert("cURL command copied to clipboard!\n\n" + curlCmd);
+      });
+    }
+
+    // Filter Buttons Event Handlers
+    document.querySelectorAll("[data-auth]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll("[data-auth]").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        activeAuthFilter = btn.getAttribute("data-auth");
+        renderEndpoints();
+      });
+    });
+
+    document.querySelectorAll("[data-method]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll("[data-method]").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        activeMethodFilter = btn.getAttribute("data-method");
+        renderEndpoints();
+      });
+    });
+
+    // Search Input Debouncing
+    let searchTimeout = null;
+    searchInput.addEventListener("input", (e) => {
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(() => {
+        searchQuery = e.target.value.trim();
+        renderEndpoints();
+      }, 150);
+    });
+
+    // Initial Render
+    renderEndpoints();
+  </script>
+</body>
+</html>

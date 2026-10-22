@@ -491,11 +491,11 @@ export default function RentalPaymentCheckoutPage() {
                           <div className="p-2.5 rounded bg-emerald-50/60 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-[11px] space-y-1.5">
                             <div className="flex justify-between items-center text-foreground font-semibold">
                               <span>Rental Charges & Fees:</span>
-                              <span>${breakdown.rental_charges.toFixed(2)}</span>
+                              <span>${breakdown.rental_charges.subtotal_due.toFixed(2)}</span>
                             </div>
                             <div className="flex justify-between items-center text-emerald-700 dark:text-emerald-300 font-semibold">
                               <span>Refundable Security Deposit (Cash Escrow):</span>
-                              <span>${breakdown.security_deposit.toFixed(2)}</span>
+                              <span>${breakdown.refundable_deposit.amount.toFixed(2)}</span>
                             </div>
                             <div className="border-t border-emerald-200 dark:border-emerald-800 pt-1 flex justify-between items-center font-bold text-xs text-foreground">
                               <span>Total Cash to Prepare:</span>

@@ -1,10 +1,25 @@
 import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
-import { getCurrentUser } from '@/lib/auth'
+import { getCurrentClientUserState, clearClientSessionCookie } from '@/lib/auth'
 
 export async function GET() {
   try {
-    const me = await getCurrentUser()
+    const { user: me, isExpired } = await getCurrentClientUserState()
+
+    if (isExpired) {
+      const response = NextResponse.json(
+        {
+          user: null,
+          listings: [],
+          expired: true,
+          error: 'SESSION_EXPIRED',
+          message: 'Your session has expired. Please sign in again.',
+        },
+        { status: 401 }
+      )
+      clearClientSessionCookie(response)
+      return response
+    }
 
     if (!me) {
       return NextResponse.json({
@@ -54,4 +69,3 @@ export async function GET() {
     })
   }
 }
-
