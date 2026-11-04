@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Search, SlidersHorizontal, X, MapPin } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -24,6 +24,21 @@ import type { AssetWithRelations } from '@/lib/types'
 
 export function ExploreSection() {
   const { filters, setFilters, resetFilters } = useStore()
+  const [localQ, setLocalQ] = useState(filters.q)
+
+  useEffect(() => {
+    setLocalQ(filters.q)
+  }, [filters.q])
+
+  // Debounce search input by 1.5 seconds: wait for user to stop typing
+  useEffect(() => {
+    const trimmed = localQ.trim()
+    if (trimmed === (filters.q || '')) return
+    const timer = setTimeout(() => {
+      setFilters({ q: trimmed })
+    }, 1500)
+    return () => clearTimeout(timer)
+  }, [localQ, filters.q, setFilters])
 
   const { data: categories = [] } = useQuery({
     queryKey: ['categories'],
@@ -77,11 +92,29 @@ export function ExploreSection() {
         <div className="relative w-full sm:w-72">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            value={filters.q}
-            onChange={(e) => setFilters({ q: e.target.value })}
+            value={localQ}
+            onChange={(e) => setLocalQ(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                setFilters({ q: localQ.trim() })
+              }
+            }}
             placeholder="Search keyword…"
-            className="pl-9"
+            className="pl-9 pr-7"
           />
+          {localQ && (
+            <button
+              type="button"
+              onClick={() => {
+                setLocalQ('')
+                setFilters({ q: '' })
+              }}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground text-xs"
+              title="Clear search"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          )}
         </div>
       </div>
 

@@ -40,6 +40,7 @@ function RentalsContent() {
   const searchParams = useSearchParams()
 
   const [search, setSearch] = useState(searchParams.get('q') || '')
+  const [debouncedSearch, setDebouncedSearch] = useState(searchParams.get('q') || '')
   const [selectedCategory, setSelectedCategory] = useState(searchParams.get('category') || 'all')
   const [selectedBrand, setSelectedBrand] = useState(searchParams.get('brand') || 'all')
   const [selectedLocation, setSelectedLocation] = useState(searchParams.get('location') || 'all')
@@ -48,10 +49,22 @@ function RentalsContent() {
   const [maxPrice, setMaxPrice] = useState(searchParams.get('maxPrice') || '')
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false)
 
+  // Debounce search input by 1.5 seconds: wait for user to stop typing before searching
+  useEffect(() => {
+    const trimmed = search.trim()
+    if (trimmed === debouncedSearch) return
+
+    const timer = setTimeout(() => {
+      setDebouncedSearch(trimmed)
+    }, 1500)
+
+    return () => clearTimeout(timer)
+  }, [search, debouncedSearch])
+
   // Sync state to URL search params
   useEffect(() => {
     const params = new URLSearchParams()
-    if (search.trim()) params.set('q', search.trim())
+    if (debouncedSearch) params.set('q', debouncedSearch)
     if (selectedCategory && selectedCategory !== 'all') params.set('category', selectedCategory)
     if (selectedBrand && selectedBrand !== 'all') params.set('brand', selectedBrand)
     if (selectedLocation && selectedLocation !== 'all') params.set('location', selectedLocation)
@@ -62,13 +75,13 @@ function RentalsContent() {
     const newQuery = params.toString()
     const targetUrl = newQuery ? `/rentals?${newQuery}` : '/rentals'
     router.replace(targetUrl, { scroll: false })
-  }, [search, selectedCategory, selectedBrand, selectedLocation, sort, minPrice, maxPrice, router])
+  }, [debouncedSearch, selectedCategory, selectedBrand, selectedLocation, sort, minPrice, maxPrice, router])
 
   // Fetch Categories
   const { data: categories } = useQuery({
-    queryKey: ['admin-categories'],
+    queryKey: ['public-categories'],
     queryFn: async () => {
-      const res = await fetch('/api/admin/categories')
+      const res = await fetch('/api/categories')
       if (!res.ok) throw new Error('Failed to fetch categories')
       return res.json()
     },
@@ -76,9 +89,9 @@ function RentalsContent() {
 
   // Fetch Brands
   const { data: brands } = useQuery({
-    queryKey: ['admin-brands'],
+    queryKey: ['public-brands'],
     queryFn: async () => {
-      const res = await fetch('/api/admin/brands')
+      const res = await fetch('/api/brands')
       if (!res.ok) throw new Error('Failed to fetch brands')
       return res.json()
     },
@@ -86,9 +99,9 @@ function RentalsContent() {
 
   // Fetch Locations
   const { data: locations } = useQuery({
-    queryKey: ['admin-locations'],
+    queryKey: ['public-locations'],
     queryFn: async () => {
-      const res = await fetch('/api/admin/locations')
+      const res = await fetch('/api/locations')
       if (!res.ok) throw new Error('Failed to fetch locations')
       return res.json()
     },
@@ -96,10 +109,10 @@ function RentalsContent() {
 
   // Fetch Published Rental Catalog
   const { data: catalogData, isLoading, refetch } = useQuery({
-    queryKey: ['rental-assets', search, selectedCategory, selectedBrand, selectedLocation, sort, minPrice, maxPrice],
+    queryKey: ['rental-assets', debouncedSearch, selectedCategory, selectedBrand, selectedLocation, sort, minPrice, maxPrice],
     queryFn: async () => {
       const params = new URLSearchParams()
-      if (search) params.set('search', search)
+      if (debouncedSearch) params.set('search', debouncedSearch)
       if (selectedCategory !== 'all') params.set('category', selectedCategory)
       if (selectedBrand !== 'all') params.set('brand', selectedBrand)
       if (selectedLocation !== 'all') params.set('location', selectedLocation)
@@ -115,6 +128,7 @@ function RentalsContent() {
 
   const resetFilters = () => {
     setSearch('')
+    setDebouncedSearch('')
     setSelectedCategory('all')
     setSelectedBrand('all')
     setSelectedLocation('all')
@@ -168,13 +182,22 @@ function RentalsContent() {
             <Input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  setDebouncedSearch(search.trim())
+                }
+              }}
               placeholder="Search cameras, laptops, drones, tools, or model names..."
-              className="pl-10 h-10 rounded-xl bg-slate-50 dark:bg-slate-800/60 border-transparent focus-visible:bg-background text-sm"
+              className="pl-10 pr-9 h-10 rounded-xl bg-slate-50 dark:bg-slate-800/60 border-transparent focus-visible:bg-background text-sm"
             />
             {search && (
               <button
-                onClick={() => setSearch('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground text-xs"
+                onClick={() => {
+                  setSearch('')
+                  setDebouncedSearch('')
+                }}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground text-xs p-0.5"
+                title="Clear search"
               >
                 <X className="h-4 w-4" />
               </button>

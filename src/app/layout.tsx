@@ -19,7 +19,7 @@ export const metadata: Metadata = {
   keywords: ["rental", "marketplace", "properties", "vehicles", "gear", "Asset Rental"],
   authors: [{ name: "Asset Rental" }],
   icons: {
-    icon: "https://z-cdn.chatglm.cn/z-ai/static/logo.svg",
+    icon: "/logo.svg",
   },
   openGraph: {
     title: "Asset Rental",

@@ -8,7 +8,10 @@ import type { AssetWithRelations } from '@/lib/types'
 
 export function AssetCard({ asset }: { asset: AssetWithRelations }) {
   const color = getCategoryColor(asset.category.color)
-  const img = asset.images?.[0]
+  const rawImg = asset.images?.[0]
+  const img = rawImg && rawImg.includes('images.unsplash.com')
+    ? rawImg.replace(/w=\d+/, 'w=600').replace(/q=\d+/, 'q=75')
+    : rawImg
   const targetHref = `/rentals/${(asset as any).slug || asset.id}`
 
   return (
@@ -23,6 +26,7 @@ export function AssetCard({ asset }: { asset: AssetWithRelations }) {
             alt={asset.title}
             className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
             loading="lazy"
+            decoding="async"
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center text-muted-foreground">

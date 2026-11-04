@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
@@ -21,15 +21,14 @@ import { useStore } from '@/lib/store'
 import { CategoryIcon } from '@/lib/category-icons'
 
 const PRESET_IMAGES = [
-  'https://z-cdn.chatglm.cn/image-search-mcp/images-ppt/dcedff8c9d17.jpg',
-  'https://z-cdn.chatglm.cn/image-search-mcp/images-ppt/8ac6ba23f4ea.jpg',
-  'https://z-cdn.chatglm.cn/image-search-mcp/images-ppt/1099b550fcea.jpg',
-  'https://z-cdn.chatglm.cn/image-search-mcp/images-ppt/ff9b5b0b7c35.jpg',
-  'https://z-cdn.chatglm.cn/image-search-mcp/images-ppt/7ec30af692e1.jpg',
-  'https://z-cdn.chatglm.cn/image-search-mcp/images-ppt/de8f4f0f1833.png',
-  'https://z-cdn.chatglm.cn/image-search-mcp/images-ppt/8322fc1d9b47.jpg',
-  'https://z-cdn.chatglm.cn/image-search-mcp/images-ppt/7c790d5b7aff.jpg',
-  'https://z-cdn.chatglm.cn/image-search-mcp/images-ppt/306b92df64aa.jpg',
+  'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=800&q=80',
+  'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=800&q=80',
+  'https://images.unsplash.com/photo-1508614589041-895b88991e3e?auto=format&fit=crop&w=800&q=80',
+  'https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?auto=format&fit=crop&w=800&q=80',
+  'https://images.unsplash.com/photo-1545454675-3531b543be5d?auto=format&fit=crop&w=800&q=80',
+  'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=800&q=80',
+  'https://images.unsplash.com/photo-1581244277943-fe4a9c777189?auto=format&fit=crop&w=800&q=80',
+  'https://images.unsplash.com/photo-1571068316344-75bc76f77890?auto=format&fit=crop&w=800&q=80',
   'https://placehold.co/800x600/e2e8f0/64748b?text=Upload+Photo',
 ]
 
@@ -155,7 +154,7 @@ export function AddListingSection() {
                 id="desc"
                 value={form.description}
                 onChange={(e) => update('description', e.target.value)}
-                placeholder="Describe what makes your asset special…"
+                placeholder="Describe what makes your asset specialâ€¦"
                 rows={4}
                 className="mt-1.5"
               />
@@ -299,7 +298,7 @@ export function AddListingSection() {
                     className="ml-1 rounded-full px-1 text-muted-foreground hover:text-foreground"
                     aria-label={`Remove ${f}`}
                   >
-                    ×
+                    Ã—
                   </button>
                 </Badge>
               ))}

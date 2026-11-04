@@ -1,18 +1,39 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Search, ArrowRight, Shield, Calendar, CreditCard, Sparkles, Star, X } from 'lucide-react'
+import { Search, ArrowRight, Shield, Calendar, CreditCard, Sparkles, Star, X, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { AssetCard } from './AssetCard'
-import { CategoryIcon, getCategoryColor } from '@/lib/category-icons'
 import { useStore } from '@/lib/store'
 import type { AssetWithRelations } from '@/lib/types'
 
 export function HomeSection() {
   const [q, setQ] = useState('')
   const [appliedSearch, setAppliedSearch] = useState('')
+  const categoryScrollRef = useRef<HTMLDivElement>(null)
+
+  const scrollCategories = (direction: 'left' | 'right') => {
+    if (categoryScrollRef.current) {
+      categoryScrollRef.current.scrollBy({
+        left: direction === 'left' ? -260 : 260,
+        behavior: 'smooth',
+      })
+    }
+  }
+
+  // Debounce search input by 1.5 seconds: wait for user to stop typing before triggering search
+  useEffect(() => {
+    const trimmed = q.trim()
+    if (trimmed === appliedSearch) return
+
+    const timer = setTimeout(() => {
+      setAppliedSearch(trimmed)
+    }, 1500)
+
+    return () => clearTimeout(timer)
+  }, [q, appliedSearch])
 
   // Selected/focused category state with URL and localStorage persistence
   const [selectedCategory, setSelectedCategory] = useState<string | null>(() => {
@@ -86,7 +107,7 @@ export function HomeSection() {
       <section className="relative overflow-hidden">
         <div className="absolute inset-0">
           <img
-            src="https://z-cdn.chatglm.cn/image-search-mcp/images-ppt/8ac6ba23f4ea.jpg"
+            src="https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1600&q=80"
             alt=""
             className="h-full w-full object-cover"
           />
@@ -117,9 +138,19 @@ export function HomeSection() {
                 <Input
                   value={q}
                   onChange={(e) => setQ(e.target.value)}
-                  placeholder="Try “villa”, “convertible”, “drone”…"
-                  className="border-0 bg-transparent pl-10 text-base shadow-none focus-visible:ring-0"
+                  placeholder="Search asset"
+                  className="border-0 bg-transparent pl-10 pr-9 text-base shadow-none focus-visible:ring-0"
                 />
+                {q && (
+                  <button
+                    type="button"
+                    onClick={clearSearch}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-1 transition-colors"
+                    title="Clear search"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
               </div>
               <Button type="submit" size="lg" className="gap-2 bg-emerald-600 text-white hover:bg-emerald-700">
                 Search
@@ -133,78 +164,6 @@ export function HomeSection() {
               <span className="flex items-center gap-1.5"><Star className="h-4 w-4" /> 4.8 avg rating</span>
             </div>
           </div>
-        </div>
-      </section>
-
-      {/* Categories */}
-      <section className="mx-auto max-w-7xl px-4 py-14 sm:px-6">
-        <div className="flex items-end justify-between">
-          <div>
-            <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">Browse by category</h2>
-            <p className="mt-1 text-muted-foreground">Find exactly what you're looking for.</p>
-          </div>
-          {/* Normal stationary link */}
-          <button
-            type="button"
-            onClick={(e) => {
-              e.preventDefault()
-            }}
-            className="hidden items-center gap-1 text-sm font-medium text-muted-foreground cursor-default sm:flex"
-          >
-            View all <ArrowRight className="h-4 w-4 opacity-50" />
-          </button>
-        </div>
-
-        <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-7">
-          {categories.map((c: any) => {
-            const color = getCategoryColor(c.color)
-            const isFocused = selectedCategory === c.slug
-
-            return (
-              <button
-                key={c.id}
-                type="button"
-                onClick={() => handleCategoryToggle(c.slug)}
-                className={`group relative flex flex-col items-center gap-3 rounded-2xl p-5 text-center transition-all ${
-                  isFocused
-                    ? 'border-2 border-emerald-600 bg-emerald-50/80 dark:bg-emerald-950/40 shadow-md ring-2 ring-emerald-500/30 scale-[1.03]'
-                    : 'border border-border bg-card hover:-translate-y-1 hover:border-emerald-300 hover:shadow-md'
-                }`}
-              >
-                <span
-                  className={`relative flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl overflow-hidden border transition-all duration-300 ${
-                    isFocused ? 'ring-2 ring-emerald-600 border-emerald-500' : 'border-border/60 group-hover:scale-105'
-                  } ${color.bg} ${color.text} shadow-xs`}
-                >
-                  {c.imageUrl && c.imageUrl.trim() ? (
-                    <img
-                      src={c.imageUrl}
-                      alt={c.name}
-                      className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110"
-                    />
-                  ) : (
-                    <CategoryIcon name={c.icon} className="h-6 w-6" />
-                  )}
-                </span>
-                <span className="flex flex-col items-center">
-                  <span
-                    className={`block text-sm transition-colors ${
-                      isFocused ? 'font-bold text-emerald-700 dark:text-emerald-400' : 'font-semibold'
-                    }`}
-                  >
-                    {c.name}
-                  </span>
-                  {isFocused ? (
-                    <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-900/60 px-2 py-0.5 rounded-full mt-1">
-                      Active ✓
-                    </span>
-                  ) : (
-                    <span className="block text-xs text-muted-foreground">{c.assetCount} items</span>
-                  )}
-                </span>
-              </button>
-            )
-          })}
         </div>
       </section>
 
@@ -257,6 +216,88 @@ export function HomeSection() {
               className="hidden items-center gap-1 text-sm font-medium text-muted-foreground cursor-default sm:flex"
             >
               Explore all <ArrowRight className="h-4 w-4 opacity-50" />
+            </button>
+          </div>
+
+          {/* Text-Only Category Cards Under Available Rentals - Single Scrollable Line */}
+          <div className="relative mt-6 flex items-center">
+            {/* Scroll Left Button */}
+            <button
+              type="button"
+              onClick={() => scrollCategories('left')}
+              className="absolute -left-3 z-10 hidden h-8 w-8 items-center justify-center rounded-full border border-border bg-background/95 shadow-md hover:bg-muted sm:flex text-muted-foreground hover:text-foreground transition-all shrink-0 cursor-pointer"
+              title="Scroll left"
+              aria-label="Scroll left"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+
+            {/* Scrollable Container */}
+            <div
+              ref={categoryScrollRef}
+              className="flex items-center gap-2.5 overflow-x-auto pb-2 pt-1 flex-nowrap scroll-smooth w-full px-1"
+              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+            >
+              {/* All Rentals Card */}
+              <button
+                type="button"
+                onClick={() => setSelectedCategory(null)}
+                className={`group shrink-0 flex items-center gap-2 rounded-xl px-4 py-2.5 text-left whitespace-nowrap transition-all ${
+                  !selectedCategory
+                    ? 'border-2 border-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-900 dark:text-emerald-200 shadow-sm ring-1 ring-emerald-500/20'
+                    : 'border border-border/80 bg-card hover:border-emerald-300 hover:bg-slate-50/70 dark:hover:bg-slate-900/40 shadow-2xs'
+                }`}
+              >
+                <span className={`text-sm font-semibold whitespace-nowrap ${!selectedCategory ? 'text-emerald-700 dark:text-emerald-400 font-bold' : 'text-foreground'}`}>
+                  All Rentals
+                </span>
+                <span className={`text-xs px-2 py-0.5 rounded-full font-medium whitespace-nowrap ${
+                  !selectedCategory 
+                    ? 'bg-emerald-200/80 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-300' 
+                    : 'bg-muted text-muted-foreground'
+                }`}>
+                  All
+                </span>
+              </button>
+
+              {/* Individual Category Cards */}
+              {categories.map((c: any) => {
+                const isFocused = selectedCategory === c.slug
+                return (
+                  <button
+                    key={c.id}
+                    type="button"
+                    onClick={() => handleCategoryToggle(c.slug)}
+                    className={`group shrink-0 flex items-center gap-2 rounded-xl px-4 py-2.5 text-left whitespace-nowrap transition-all ${
+                      isFocused
+                        ? 'border-2 border-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-900 dark:text-emerald-200 shadow-sm ring-1 ring-emerald-500/20'
+                        : 'border border-border/80 bg-card hover:border-emerald-300 hover:bg-slate-50/70 dark:hover:bg-slate-900/40 shadow-2xs'
+                    }`}
+                  >
+                    <span className={`text-sm font-semibold whitespace-nowrap ${isFocused ? 'text-emerald-700 dark:text-emerald-400 font-bold' : 'text-foreground'}`}>
+                      {c.name}
+                    </span>
+                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium whitespace-nowrap ${
+                      isFocused 
+                        ? 'bg-emerald-200/80 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-300' 
+                        : 'bg-muted text-muted-foreground'
+                    }`}>
+                      {c.assetCount ?? 0}
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
+
+            {/* Scroll Right Button */}
+            <button
+              type="button"
+              onClick={() => scrollCategories('right')}
+              className="absolute -right-3 z-10 hidden h-8 w-8 items-center justify-center rounded-full border border-border bg-background/95 shadow-md hover:bg-muted sm:flex text-muted-foreground hover:text-foreground transition-all shrink-0 cursor-pointer"
+              title="Scroll right"
+              aria-label="Scroll right"
+            >
+              <ChevronRight className="h-4 w-4" />
             </button>
           </div>
 

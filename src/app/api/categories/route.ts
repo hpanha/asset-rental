@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server'
+﻿import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 
 export async function GET() {
@@ -7,6 +7,9 @@ export async function GET() {
       where: { status: 'ACTIVE' },
       orderBy: [{ displayOrder: 'asc' }, { name: 'asc' }],
       include: {
+        parent: {
+          select: { id: true, name: true, slug: true },
+        },
         _count: {
           select: {
             listings: {
@@ -23,6 +26,7 @@ export async function GET() {
         name: c.name,
         slug: c.slug,
         parentId: c.parentId,
+        parent: c.parent,
         imageUrl: c.imageUrl,
         icon: c.iconName || 'Folder',
         color: c.color || '#10B981',
