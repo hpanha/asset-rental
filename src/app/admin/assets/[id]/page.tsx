@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, Suspense } from 'react'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
@@ -47,7 +47,7 @@ import {
 import { toast } from 'sonner'
 import type { AssetListingDetail, PublishValidationResult } from '@/lib/types'
 
-export default function AssetDetailPage() {
+function AssetDetailContent() {
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -1417,6 +1417,20 @@ export default function AssetDetailPage() {
         </DialogContent>
       </Dialog>
     </div>
+  )
+}
+
+export default function AssetDetailPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-[400px] items-center justify-center p-8">
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-200 border-t-emerald-600" />
+        </div>
+      }
+    >
+      <AssetDetailContent />
+    </Suspense>
   )
 }
 

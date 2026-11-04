@@ -1,10 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Eye, EyeOff, Boxes, Lock, Clock } from 'lucide-react'
 
-export default function AdminLoginPage() {
+function AdminLoginContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const from = searchParams.get('from') || '/admin'
@@ -201,6 +201,20 @@ export default function AdminLoginPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function AdminLoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex h-screen w-screen items-center justify-center bg-[#0d4a2e]">
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-white/20 border-t-white" />
+        </div>
+      }
+    >
+      <AdminLoginContent />
+    </Suspense>
   )
 }
 
