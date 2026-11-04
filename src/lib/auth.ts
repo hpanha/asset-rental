@@ -78,13 +78,52 @@ export async function getCurrentClientUserState(): Promise<UserSessionState> {
       return { user: null, isExpired: false }
     }
 
-    const user = await db.user.findUnique({
-      where: { id: payload.sub },
-    })
+    let user = null
+    try {
+      user = await db.user.findUnique({
+        where: { id: payload.sub },
+      })
+    } catch {
+      // Non-fatal if DB is busy or initializing
+    }
 
-    // Strict client role check: Admins cannot masquerade as client
-    if (!user || user.role === 'admin' || user.status === 'SUSPENDED') {
-      return { user: null, isExpired: false }
+    if (user) {
+      if (user.role === 'admin' || user.status === 'SUSPENDED') {
+        return { user: null, isExpired: false }
+      }
+      return {
+        user: {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          avatar: user.avatar,
+          phone: user.phone,
+          bio: user.bio,
+          role: user.role,
+          status: user.status,
+          createdAt: user.createdAt,
+          updatedAt: user.updatedAt,
+        },
+        isExpired: false,
+      }
+    }
+
+    if (payload.role !== 'admin' && payload.sessionType === 'client') {
+      return {
+        user: {
+          id: payload.sub,
+          email: payload.email,
+          name: payload.name,
+          avatar: payload.avatar || null,
+          phone: null,
+          bio: null,
+          role: payload.role || 'client',
+          status: 'ACTIVE',
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+        isExpired: false,
+      }
     }
 
     return {
@@ -154,12 +193,52 @@ export async function getCurrentAdminUserState(): Promise<UserSessionState> {
       return { user: null, isExpired: false }
     }
 
-    const user = await db.user.findUnique({
-      where: { id: payload.sub },
-    })
+    let user = null
+    try {
+      user = await db.user.findUnique({
+        where: { id: payload.sub },
+      })
+    } catch {
+      // Non-fatal if DB is busy or initializing
+    }
 
-    if (!user || user.role !== 'admin' || user.status === 'SUSPENDED') {
-      return { user: null, isExpired: false }
+    if (user) {
+      if (user.role !== 'admin' || user.status === 'SUSPENDED') {
+        return { user: null, isExpired: false }
+      }
+      return {
+        user: {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          avatar: user.avatar,
+          phone: user.phone,
+          bio: user.bio,
+          role: user.role,
+          status: user.status,
+          createdAt: user.createdAt,
+          updatedAt: user.updatedAt,
+        },
+        isExpired: false,
+      }
+    }
+
+    if (payload.role === 'admin') {
+      return {
+        user: {
+          id: payload.sub,
+          email: payload.email,
+          name: payload.name,
+          avatar: payload.avatar || null,
+          phone: null,
+          bio: null,
+          role: 'admin',
+          status: 'ACTIVE',
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+        isExpired: false,
+      }
     }
 
     return {

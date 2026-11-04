@@ -38,7 +38,7 @@ export async function GET() {
   } catch (error: any) {
     console.error('Error in GET /api/admin/me:', error)
     return NextResponse.json(
-      { ok: false, error: 'Internal server error' },
+      { ok: false, error: error?.message || 'Internal server error' },
       { status: 500 }
     )
   }

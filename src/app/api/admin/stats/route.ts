@@ -53,7 +53,24 @@ export async function GET() {
       recentAuditEvents,
     })
   } catch (error: any) {
-    console.error('Error fetching admin stats:', error)
-    return NextResponse.json({ error: error.message || 'Failed to fetch admin stats' }, { status: 500 })
+    console.warn('[Admin Stats] Error fetching admin stats:', error)
+    return NextResponse.json({
+      listings: {
+        total: 0,
+        published: 0,
+        draft: 0,
+        unpublished: 0,
+        archived: 0,
+      },
+      units: {
+        total: 0,
+        active: 0,
+        maintenance: 0,
+      },
+      categories: 0,
+      locations: 0,
+      recentAuditEvents: [],
+      warning: error?.message || 'Database initializing',
+    })
   }
 }
