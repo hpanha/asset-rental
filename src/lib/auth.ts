@@ -78,7 +78,7 @@ export async function getCurrentClientUserState(): Promise<UserSessionState> {
       return { user: null, isExpired: false }
     }
 
-    let user = null
+    let user: any = null
     try {
       user = await db.user.findUnique({
         where: { id: payload.sub },
@@ -126,21 +126,7 @@ export async function getCurrentClientUserState(): Promise<UserSessionState> {
       }
     }
 
-    return {
-      user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        avatar: user.avatar,
-        phone: user.phone,
-        bio: user.bio,
-        role: user.role,
-        status: user.status,
-        createdAt: user.createdAt,
-        updatedAt: user.updatedAt,
-      },
-      isExpired: false,
-    }
+    return { user: null, isExpired: false }
   } catch {
     return { user: null, isExpired: false }
   }
@@ -193,7 +179,7 @@ export async function getCurrentAdminUserState(): Promise<UserSessionState> {
       return { user: null, isExpired: false }
     }
 
-    let user = null
+    let user: any = null
     try {
       user = await db.user.findUnique({
         where: { id: payload.sub },
@@ -241,21 +227,7 @@ export async function getCurrentAdminUserState(): Promise<UserSessionState> {
       }
     }
 
-    return {
-      user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        avatar: user.avatar,
-        phone: user.phone,
-        bio: user.bio,
-        role: user.role,
-        status: user.status,
-        createdAt: user.createdAt,
-        updatedAt: user.updatedAt,
-      },
-      isExpired: false,
-    }
+    return { user: null, isExpired: false }
   } catch {
     return { user: null, isExpired: false }
   }

@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
@@ -123,12 +123,12 @@ export function AddListingSection() {
         <ArrowLeft className="h-4 w-4" /> Back to home
       </button>
 
-      <div className="rounded-2xl bg-gradient-to-r from-emerald-50 to-teal-50 p-4">
-        <div className="flex items-center gap-2 text-emerald-700">
-          <Sparkles className="h-5 w-5" />
+      <div className="rounded-2xl bg-gradient-to-r from-purple-950/70 via-purple-900/50 to-slate-900 border border-purple-500/30 p-4">
+        <div className="flex items-center gap-2 text-purple-300">
+          <Sparkles className="h-5 w-5 text-fuchsia-400" />
           <span className="font-semibold">List your asset and start earning</span>
         </div>
-        <p className="mt-1 text-sm text-emerald-700/80">
+        <p className="mt-1 text-sm text-purple-200/80">
           Fill in the details below. Your listing goes live instantly.
         </p>
       </div>
@@ -250,13 +250,13 @@ export function AddListingSection() {
                   key={url}
                   onClick={() => togglePreset(url)}
                   className={`relative aspect-square overflow-hidden rounded-lg border-2 transition ${
-                    selected ? 'border-emerald-500 ring-2 ring-emerald-200' : 'border-border hover:border-emerald-300'
+                    selected ? 'border-purple-500 ring-2 ring-purple-500/40' : 'border-border hover:border-purple-400'
                   }`}
                 >
                   { }
                   <img src={url} alt="" className="h-full w-full object-cover" />
                   {selected && (
-                    <span className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-emerald-600 text-white">
+                    <span className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-purple-600 text-white">
                       <Check className="h-3 w-3" />
                     </span>
                   )}
@@ -311,7 +311,7 @@ export function AddListingSection() {
           <Button type="button" variant="outline" onClick={goDashboard} disabled={submitting}>
             Cancel
           </Button>
-          <Button type="submit" disabled={submitting} className="gap-2 bg-emerald-600 text-white hover:bg-emerald-700">
+          <Button type="submit" disabled={submitting} className="gap-2 bg-gradient-to-r from-purple-600 to-fuchsia-600 text-white hover:from-purple-500 hover:to-fuchsia-500 shadow-md shadow-purple-900/40">
             {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
             Publish listing
           </Button>

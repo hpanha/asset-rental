@@ -361,5 +361,40 @@ export interface AssetWithRelations {
   }
   brand?: any
   owner?: any
+  reviews?: ReviewWithUser[]
 }
+
+export interface ReviewWithUser {
+  id: string
+  rating: number
+  comment?: string | null
+  createdAt: string
+  user: {
+    id: string
+    name: string
+    avatar?: string | null
+  }
+}
+
+export interface BookingWithAsset {
+  id: string
+  startDate: string
+  endDate: string
+  totalPrice: number
+  status: string
+  asset: {
+    id: string
+    title: string
+    city: string
+    images: string[]
+    category: {
+      name: string
+      icon: string
+    }
+    owner: {
+      name: string
+    }
+  }
+}
+
 

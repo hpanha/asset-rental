@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Search, ArrowRight, Shield, Calendar, CreditCard, Sparkles, Star, X, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Search, ArrowRight, Calendar, CreditCard, X, ChevronLeft, ChevronRight, ChevronDown, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { AssetCard } from './AssetCard'
@@ -10,9 +10,21 @@ import { useStore } from '@/lib/store'
 import type { AssetWithRelations } from '@/lib/types'
 
 export function HomeSection() {
-  const [q, setQ] = useState('')
-  const [appliedSearch, setAppliedSearch] = useState('')
+  const storeSearch = useStore((s) => s.filters.q)
+  const setStoreSearch = useStore((s) => s.setSearch)
+  const [heroSearchInput, setHeroSearchInput] = useState(storeSearch)
   const categoryScrollRef = useRef<HTMLDivElement>(null)
+
+  // Keep hero search input synchronized with global store
+  useEffect(() => {
+    setHeroSearchInput(storeSearch)
+  }, [storeSearch])
+
+  const handleHeroSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    setStoreSearch(heroSearchInput.trim())
+    document.getElementById('available-rentals-heading')?.scrollIntoView({ behavior: 'smooth' })
+  }
 
   const scrollCategories = (direction: 'left' | 'right') => {
     if (categoryScrollRef.current) {
@@ -22,18 +34,6 @@ export function HomeSection() {
       })
     }
   }
-
-  // Debounce search input by 1.5 seconds: wait for user to stop typing before triggering search
-  useEffect(() => {
-    const trimmed = q.trim()
-    if (trimmed === appliedSearch) return
-
-    const timer = setTimeout(() => {
-      setAppliedSearch(trimmed)
-    }, 1500)
-
-    return () => clearTimeout(timer)
-  }, [q, appliedSearch])
 
   // Selected/focused category state with URL and localStorage persistence
   const [selectedCategory, setSelectedCategory] = useState<string | null>(() => {
@@ -76,26 +76,20 @@ export function HomeSection() {
 
   // Query assets filtered by focused category and search keyword
   const { data: featured = [], isLoading: assetsLoading } = useQuery<AssetWithRelations[]>({
-    queryKey: ['assets', 'featured', selectedCategory, appliedSearch],
+    queryKey: ['assets', 'featured', selectedCategory, storeSearch],
     queryFn: async () => {
       const params = new URLSearchParams()
       params.set('limit', '24')
       if (selectedCategory) params.set('category', selectedCategory)
-      if (appliedSearch) params.set('q', appliedSearch)
+      if (storeSearch) params.set('q', storeSearch)
       const r = await fetch(`/api/assets?${params.toString()}`)
       if (!r.ok) throw new Error('Failed to fetch assets')
       return r.json()
     },
   })
 
-  const submitSearch = (e: React.FormEvent) => {
-    e.preventDefault()
-    setAppliedSearch(q.trim())
-  }
-
   const clearSearch = () => {
-    setQ('')
-    setAppliedSearch('')
+    setStoreSearch('')
   }
 
   const categoryList = Array.isArray(categories) ? categories : []
@@ -103,97 +97,131 @@ export function HomeSection() {
 
   return (
     <div>
-      {/* Hero */}
-      <section className="relative overflow-hidden">
-        <div className="absolute inset-0">
+      {/* Hero: Full viewport screen on first open (no scroll needed) */}
+      <section id="hero-image-section" className="relative w-full h-screen min-h-[640px] flex flex-col items-center justify-between overflow-hidden">
+        {/* Softly blurred background layer */}
+        <div className="absolute inset-0 z-0 overflow-hidden">
           <img
-            src="https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1600&q=80"
-            alt=""
-            className="h-full w-full object-cover"
+            src="/hero-rental-assets.jpg"
+            alt="Asset Rental"
+            className="h-full w-full object-cover object-center scale-105 filter blur-[3.5px] brightness-90 transition-all duration-700"
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-emerald-950/90 via-emerald-900/70 to-slate-900/50" />
+          {/* Defocus overlay layer */}
+          <div className="absolute inset-0 bg-slate-950/30 backdrop-blur-[1px]" />
+          <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-transparent to-slate-950/40" />
         </div>
 
-        <div className="relative mx-auto max-w-7xl px-4 py-20 sm:px-6 sm:py-28 lg:py-32">
-          <div className="max-w-2xl">
-            <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-sm font-medium text-white backdrop-blur">
-              <Sparkles className="h-3.5 w-3.5 text-amber-300" />
-              Over 10,000+ assets ready to rent
-            </span>
-            <h1 className="mt-5 text-4xl font-bold leading-tight tracking-tight text-white sm:text-5xl lg:text-6xl">
-              Rent anything.<br />
-              <span className="text-emerald-300">Own nothing.</span>
-            </h1>
-            <p className="mt-5 max-w-xl text-lg text-emerald-50/90">
-              From beachfront villas to pro cameras and power tools — discover and book
-              the gear you need, by the day, from trusted local owners.
-            </p>
+        {/* Top spacer to balance the transparent header */}
+        <div className="relative z-10 w-full pt-24 sm:pt-28" />
 
-            <form
-              onSubmit={submitSearch}
-              className="mt-8 flex flex-col gap-2 rounded-2xl bg-white/95 p-2 shadow-xl backdrop-blur sm:flex-row sm:items-center"
-            >
-              <div className="relative flex-1">
-                <Search className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  value={q}
-                  onChange={(e) => setQ(e.target.value)}
-                  placeholder="Search asset"
-                  className="border-0 bg-transparent pl-10 pr-9 text-base shadow-none focus-visible:ring-0"
+        {/* Center: Descriptive text overlaying background + Liquid Search Bar moved down */}
+        <div className="relative z-10 w-full max-w-3xl px-4 flex flex-col items-center text-center my-auto">
+          {/* Pill badge */}
+          <span className="inline-flex items-center gap-2 rounded-full bg-purple-950/70 border border-purple-500/35 px-4 py-1.5 text-xs font-semibold text-purple-200 backdrop-blur-md shadow-lg shadow-purple-950/40">
+            <Sparkles className="h-3.5 w-3.5 text-fuchsia-400" />
+            <span>Discover & Rent Multi-Category Assets</span>
+          </span>
+
+          {/* Punchy Headline */}
+          <h1 className="mt-4 text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-[1.12] drop-shadow-lg">
+            Rent Anything On Demand.<br />
+            <span className="bg-gradient-to-r from-purple-400 via-fuchsia-300 to-pink-400 bg-clip-text text-transparent">
+              Villas, Supercars, Cameras & Tech.
+            </span>
+          </h1>
+
+          {/* Descriptive Subtitle */}
+          <p className="mt-4 max-w-xl text-sm sm:text-base text-slate-200/95 font-normal leading-relaxed drop-shadow-md">
+            The modern marketplace to discover and book verified luxury villas, electric sports cars, cinema camera kits, drones, and workstation gear by the day from trusted local owners.
+          </p>
+
+          {/* Liquid Search Bar in the Hero */}
+          <div id="hero-search-box" className="mt-7 w-full max-w-xl">
+            <form onSubmit={handleHeroSearchSubmit} className="liquid-search-card !mt-0 w-full">
+              <div className="relative flex items-center w-full">
+                <Search className="h-4.5 w-4.5 text-purple-300 ml-1 mr-3 shrink-0 pointer-events-none" />
+                <input
+                  type="text"
+                  value={heroSearchInput}
+                  onChange={(e) => setHeroSearchInput(e.target.value)}
+                  placeholder="Search villas, cameras, laptops, cars, equipment..."
+                  className="flex-1 bg-transparent border-none outline-none text-white placeholder:text-white/50 text-sm sm:text-base font-normal tracking-wide focus:ring-0 focus:outline-none min-w-0"
+                  autoComplete="off"
+                  spellCheck="false"
                 />
-                {q && (
+                {heroSearchInput && (
                   <button
                     type="button"
-                    onClick={clearSearch}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-1 transition-colors"
+                    onClick={() => {
+                      setHeroSearchInput('')
+                      setStoreSearch('')
+                    }}
+                    className="text-white/50 hover:text-white p-1 rounded-full hover:bg-white/10 transition-colors mr-2 shrink-0"
                     title="Clear search"
+                    aria-label="Clear search"
                   >
                     <X className="h-4 w-4" />
                   </button>
                 )}
+                <button
+                  type="submit"
+                  className="liquid-submit-btn shrink-0"
+                  title="Search asset"
+                  aria-label="Search asset"
+                >
+                  <Search className="h-4 w-4 stroke-[2.5]" />
+                  <span>Search</span>
+                </button>
               </div>
-              <Button type="submit" size="lg" className="gap-2 bg-emerald-600 text-white hover:bg-emerald-700">
-                Search
-                <ArrowRight className="h-4 w-4" />
-              </Button>
             </form>
-
-            <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-emerald-50/80">
-              <span className="flex items-center gap-1.5"><Shield className="h-4 w-4" /> Secure deposits</span>
-              <span className="flex items-center gap-1.5"><Calendar className="h-4 w-4" /> Free cancellation</span>
-              <span className="flex items-center gap-1.5"><Star className="h-4 w-4" /> 4.8 avg rating</span>
-            </div>
           </div>
         </div>
+
+        {/* Scroll cue for smooth navigation to Available Rentals */}
+        <button
+          type="button"
+          onClick={() => {
+            document.getElementById('available-rentals-heading')?.scrollIntoView({ behavior: 'smooth' })
+          }}
+          className="relative z-20 mb-8 flex flex-col items-center gap-2 text-white/75 hover:text-white transition-all cursor-pointer group"
+          aria-label="Explore available rentals"
+        >
+          <span className="text-[11px] font-bold tracking-widest uppercase text-white/70 group-hover:text-white transition-colors drop-shadow-md">
+            Explore Rentals
+          </span>
+          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 backdrop-blur-md border border-white/20 group-hover:border-purple-400/50 group-hover:bg-white/15 transition-all shadow-[0_0_15px_rgba(168,85,247,0.3)]">
+            <ChevronDown className="h-4 w-4 animate-bounce text-purple-300 group-hover:text-purple-200" />
+          </div>
+        </button>
       </section>
 
       {/* Available Rentals Grid */}
-      <section className="bg-muted/30 py-14">
+      <section className="bg-slate-950 py-14 border-t border-slate-800/80 text-white">
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
             <div>
               <div className="flex flex-wrap items-center gap-2.5">
-                <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">Available rentals</h2>
+                <h2 id="available-rentals-heading" className="text-2xl font-bold tracking-tight sm:text-3xl text-white">Available rentals</h2>
                 {focusedCategoryObj && (
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 text-xs font-semibold px-3 py-1 border border-emerald-500/30">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-purple-950/80 text-purple-200 text-xs font-semibold px-3 py-1 border border-purple-500/40 shadow-sm">
                     <span>Category: <strong>{focusedCategoryObj.name}</strong></span>
                     <button
                       type="button"
                       onClick={() => setSelectedCategory(null)}
-                      className="ml-1 text-emerald-700 hover:text-emerald-950 dark:hover:text-white font-bold p-0.5 hover:bg-emerald-200/60 rounded-full"
+                      className="ml-1 text-purple-300 hover:text-white font-bold p-0.5 hover:bg-purple-800/60 rounded-full"
                       title="Click to unfocus category"
                     >
                       <X className="h-3 w-3" />
                     </button>
                   </span>
                 )}
-                {appliedSearch && (
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-xs font-semibold px-3 py-1 border border-border">
-                    <span>Keyword: “{appliedSearch}”</span>
+                {storeSearch && (
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-900 text-purple-200 text-xs font-semibold px-3 py-1 border border-purple-500/30 shadow-sm">
+                    <span>Keyword: “{storeSearch}”</span>
                     <button
                       type="button"
                       onClick={clearSearch}
-                      className="ml-1 hover:text-foreground font-bold p-0.5 hover:bg-slate-200 rounded-full"
+                      className="ml-1 hover:text-white font-bold p-0.5 hover:bg-slate-800 rounded-full"
                       title="Clear keyword filter"
                     >
                       <X className="h-3 w-3" />
@@ -201,7 +229,7 @@ export function HomeSection() {
                   </span>
                 )}
               </div>
-              <p className="mt-1 text-muted-foreground">
+              <p className="mt-1 text-slate-400">
                 {focusedCategoryObj
                   ? `Showing verified rentals in ${focusedCategoryObj.name}. Click category again to show all.`
                   : 'Top-rated and newly listed equipment ready to rent.'}
@@ -213,7 +241,7 @@ export function HomeSection() {
               onClick={(e) => {
                 e.preventDefault()
               }}
-              className="hidden items-center gap-1 text-sm font-medium text-muted-foreground cursor-default sm:flex"
+              className="hidden items-center gap-1 text-sm font-medium text-slate-400 cursor-default sm:flex"
             >
               Explore all <ArrowRight className="h-4 w-4 opacity-50" />
             </button>
@@ -225,7 +253,7 @@ export function HomeSection() {
             <button
               type="button"
               onClick={() => scrollCategories('left')}
-              className="absolute -left-3 z-10 hidden h-8 w-8 items-center justify-center rounded-full border border-border bg-background/95 shadow-md hover:bg-muted sm:flex text-muted-foreground hover:text-foreground transition-all shrink-0 cursor-pointer"
+              className="absolute -left-3 z-10 hidden h-8 w-8 items-center justify-center rounded-full border border-slate-800 bg-slate-900/95 shadow-md hover:bg-slate-800 sm:flex text-slate-300 hover:text-white transition-all shrink-0 cursor-pointer"
               title="Scroll left"
               aria-label="Scroll left"
             >
@@ -244,17 +272,17 @@ export function HomeSection() {
                 onClick={() => setSelectedCategory(null)}
                 className={`group shrink-0 flex items-center gap-2 rounded-xl px-4 py-2.5 text-left whitespace-nowrap transition-all ${
                   !selectedCategory
-                    ? 'border-2 border-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-900 dark:text-emerald-200 shadow-sm ring-1 ring-emerald-500/20'
-                    : 'border border-border/80 bg-card hover:border-emerald-300 hover:bg-slate-50/70 dark:hover:bg-slate-900/40 shadow-2xs'
+                    ? 'border-2 border-purple-500 bg-purple-950/80 text-purple-200 shadow-md ring-1 ring-purple-500/30'
+                    : 'border border-slate-800/80 bg-slate-900/70 hover:border-purple-500/40 hover:bg-slate-800/80 text-slate-300 shadow-2xs'
                 }`}
               >
-                <span className={`text-sm font-semibold whitespace-nowrap ${!selectedCategory ? 'text-emerald-700 dark:text-emerald-400 font-bold' : 'text-foreground'}`}>
+                <span className={`text-sm font-semibold whitespace-nowrap ${!selectedCategory ? 'text-purple-300 font-bold' : 'text-slate-200'}`}>
                   All Rentals
                 </span>
                 <span className={`text-xs px-2 py-0.5 rounded-full font-medium whitespace-nowrap ${
                   !selectedCategory 
-                    ? 'bg-emerald-200/80 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-300' 
-                    : 'bg-muted text-muted-foreground'
+                    ? 'bg-purple-900/80 text-purple-200' 
+                    : 'bg-slate-800 text-slate-400'
                 }`}>
                   All
                 </span>
@@ -270,17 +298,17 @@ export function HomeSection() {
                     onClick={() => handleCategoryToggle(c.slug)}
                     className={`group shrink-0 flex items-center gap-2 rounded-xl px-4 py-2.5 text-left whitespace-nowrap transition-all ${
                       isFocused
-                        ? 'border-2 border-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-900 dark:text-emerald-200 shadow-sm ring-1 ring-emerald-500/20'
-                        : 'border border-border/80 bg-card hover:border-emerald-300 hover:bg-slate-50/70 dark:hover:bg-slate-900/40 shadow-2xs'
+                        ? 'border-2 border-purple-500 bg-purple-950/80 text-purple-200 shadow-md ring-1 ring-purple-500/30'
+                        : 'border border-slate-800/80 bg-slate-900/70 hover:border-purple-500/40 hover:bg-slate-800/80 text-slate-300 shadow-2xs'
                     }`}
                   >
-                    <span className={`text-sm font-semibold whitespace-nowrap ${isFocused ? 'text-emerald-700 dark:text-emerald-400 font-bold' : 'text-foreground'}`}>
+                    <span className={`text-sm font-semibold whitespace-nowrap ${isFocused ? 'text-purple-300 font-bold' : 'text-slate-200'}`}>
                       {c.name}
                     </span>
                     <span className={`text-xs px-2 py-0.5 rounded-full font-medium whitespace-nowrap ${
                       isFocused 
-                        ? 'bg-emerald-200/80 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-300' 
-                        : 'bg-muted text-muted-foreground'
+                        ? 'bg-purple-900/80 text-purple-200' 
+                        : 'bg-slate-800 text-slate-400'
                     }`}>
                       {c.assetCount ?? 0}
                     </span>
@@ -293,7 +321,7 @@ export function HomeSection() {
             <button
               type="button"
               onClick={() => scrollCategories('right')}
-              className="absolute -right-3 z-10 hidden h-8 w-8 items-center justify-center rounded-full border border-border bg-background/95 shadow-md hover:bg-muted sm:flex text-muted-foreground hover:text-foreground transition-all shrink-0 cursor-pointer"
+              className="absolute -right-3 z-10 hidden h-8 w-8 items-center justify-center rounded-full border border-slate-800 bg-slate-900/95 shadow-md hover:bg-slate-800 sm:flex text-slate-300 hover:text-white transition-all shrink-0 cursor-pointer"
               title="Scroll right"
               aria-label="Scroll right"
             >
@@ -320,7 +348,7 @@ export function HomeSection() {
                   setSelectedCategory(null)
                   clearSearch()
                 }}
-                className="mt-4 text-xs border-emerald-500/40 text-emerald-600 hover:bg-emerald-50"
+                className="mt-4 text-xs border-purple-500/40 text-purple-300 hover:bg-purple-950/50 hover:text-white"
               >
                 Clear All Filters
               </Button>
@@ -336,47 +364,55 @@ export function HomeSection() {
       </section>
 
       {/* How it works */}
-      <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">How Asset Rental works</h2>
-          <p className="mt-2 text-muted-foreground">Booking your next rental in three simple steps.</p>
-        </div>
+      <section className="bg-slate-950 py-16 text-white border-t border-slate-900/80">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6">
+          <div className="text-center">
+            <h2 className="text-2xl font-bold tracking-tight sm:text-3xl text-white">How Asset Rental works</h2>
+            <p className="mt-2 text-slate-400">Booking your next rental in three simple steps.</p>
+          </div>
 
-        <div className="mt-10 grid gap-6 md:grid-cols-3">
-          {[
-            { icon: Search, title: '1. Discover', text: 'Browse thousands of assets across properties, vehicles, gear and more. Filter by location, price and category.' },
-            { icon: Calendar, title: '2. Book', text: 'Pick your dates and confirm instantly. Secure deposits and free cancellation keep you protected.' },
-            { icon: CreditCard, title: '3. Enjoy', text: 'Meet the owner, pick up your rental, and enjoy. Return it and leave a review to help the community.' },
-          ].map((step) => (
-            <div key={step.title} className="relative rounded-2xl border border-border bg-card p-6">
-              <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
-                <step.icon className="h-6 w-6" />
-              </span>
-              <h3 className="mt-4 text-lg font-semibold">{step.title}</h3>
-              <p className="mt-1.5 text-sm text-muted-foreground">{step.text}</p>
-            </div>
-          ))}
+          <div className="mt-10 grid gap-6 md:grid-cols-3">
+            {[
+              { icon: Search, title: '1. Discover', text: 'Browse thousands of assets across properties, vehicles, gear and more. Filter by location, price and category.' },
+              { icon: Calendar, title: '2. Book', text: 'Pick your dates and confirm instantly. Secure deposits and free cancellation keep you protected.' },
+              { icon: CreditCard, title: '3. Enjoy', text: 'Meet the owner, pick up your rental, and enjoy. Return it and leave a review to help the community.' },
+            ].map((step) => (
+              <div
+                key={step.title}
+                className="relative rounded-2xl border border-slate-800/90 bg-slate-900/60 p-6 shadow-xl shadow-purple-950/20 backdrop-blur-sm transition-all hover:border-purple-500/40 hover:-translate-y-1"
+              >
+                <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-purple-950/80 border border-purple-500/30 text-purple-400 shadow-md shadow-purple-950/40">
+                  <step.icon className="h-6 w-6" />
+                </span>
+                <h3 className="mt-4 text-lg font-semibold text-slate-100">{step.title}</h3>
+                <p className="mt-1.5 text-sm text-slate-400 leading-relaxed">{step.text}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
       {/* CTA banner */}
-      <section className="mx-auto max-w-7xl px-4 pb-16 sm:px-6">
-        <div className="overflow-hidden rounded-3xl bg-gradient-to-r from-emerald-600 to-teal-600 px-6 py-12 sm:px-12">
-          <div className="flex flex-col items-start justify-between gap-6 sm:flex-row sm:items-center">
-            <div>
-              <h2 className="text-2xl font-bold text-white sm:text-3xl">Got an asset sitting idle?</h2>
-              <p className="mt-2 max-w-xl text-emerald-50">
-                Turn your spare room, second car, or unused gear into steady income. List it in minutes.
-              </p>
+      <section className="bg-slate-950 pb-20 pt-4">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6">
+          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-purple-950 via-purple-900/80 to-slate-950 border border-purple-500/30 px-6 py-12 sm:px-12 shadow-2xl shadow-purple-950/50">
+            <div className="absolute -right-20 -bottom-20 h-64 w-64 rounded-full bg-purple-600/20 blur-3xl pointer-events-none" />
+            <div className="relative z-10 flex flex-col items-start justify-between gap-6 sm:flex-row sm:items-center">
+              <div>
+                <h2 className="text-2xl font-bold text-white sm:text-3xl">Got an asset sitting idle?</h2>
+                <p className="mt-2 max-w-xl text-purple-200/90 text-sm sm:text-base leading-relaxed">
+                  Turn your spare room, electric car, camera equipment, or tech gear into steady income. List it in minutes.
+                </p>
+              </div>
+              <Button
+                onClick={useStore.getState().goAddListing}
+                size="lg"
+                className="bg-gradient-to-r from-purple-500 to-fuchsia-500 hover:from-purple-600 hover:to-fuchsia-600 text-white font-semibold shadow-lg shadow-purple-500/40 border border-purple-300/30 cursor-pointer transition-transform hover:scale-105"
+              >
+                Start earning
+                <ArrowRight className="ml-1.5 h-4 w-4" />
+              </Button>
             </div>
-            <Button
-              onClick={useStore.getState().goAddListing}
-              size="lg"
-              className="bg-white text-emerald-700 hover:bg-emerald-50"
-            >
-              Start earning
-              <ArrowRight className="ml-1 h-4 w-4" />
-            </Button>
           </div>
         </div>
       </section>

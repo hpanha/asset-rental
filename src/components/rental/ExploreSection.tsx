@@ -146,7 +146,7 @@ export function ExploreSection() {
                     <button
                       onClick={() => setFilters({ category: null })}
                       className={`flex items-center justify-between rounded-lg px-3 py-2 text-sm transition ${
-                        !filters.category ? 'bg-emerald-50 text-emerald-700 font-medium' : 'hover:bg-muted'
+                        !filters.category ? 'bg-purple-950/70 text-purple-200 border border-purple-500/30 font-medium' : 'hover:bg-muted text-slate-300'
                       }`}
                     >
                       All categories
@@ -159,7 +159,7 @@ export function ExploreSection() {
                           key={c.id}
                           onClick={() => setFilters({ category: active ? null : c.slug })}
                           className={`flex items-center justify-between rounded-lg px-3 py-2 text-sm transition ${
-                            active ? 'bg-emerald-50 text-emerald-700 font-medium' : 'hover:bg-muted'
+                            active ? 'bg-purple-950/70 text-purple-200 border border-purple-500/30 font-medium' : 'hover:bg-muted text-slate-300'
                           }`}
                         >
                           <span className="flex items-center gap-2.5">
@@ -197,7 +197,7 @@ export function ExploreSection() {
                 <div>
                   <div className="mb-2 flex items-center justify-between">
                     <Label className="text-sm font-medium">Max price / day</Label>
-                    <span className="text-sm font-semibold text-emerald-700">${priceRange[1]}</span>
+                    <span className="text-sm font-semibold text-purple-400">${priceRange[1]}</span>
                   </div>
                   <Slider
                     value={priceRange}
