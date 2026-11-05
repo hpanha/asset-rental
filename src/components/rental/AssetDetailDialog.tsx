@@ -189,7 +189,7 @@ export function AssetDetailDialog() {
                     <p className="font-semibold">{asset.owner.name}</p>
                   </div>
                   <Badge variant="secondary" className="ml-auto gap-1">
-                    <CheckCircle2 className="h-3 w-3 text-emerald-600" /> Verified
+                    <CheckCircle2 className="h-3 w-3 text-purple-400" /> Verified
                   </Badge>
                 </div>
 
@@ -206,7 +206,7 @@ export function AssetDetailDialog() {
                     <div className="mt-3 flex flex-wrap gap-2">
                       {asset.features.map((f) => (
                         <Badge key={f} variant="outline" className="gap-1 font-normal">
-                          <CheckCircle2 className="h-3 w-3 text-emerald-600" />
+                          <CheckCircle2 className="h-3 w-3 text-purple-400" />
                           {f}
                         </Badge>
                       ))}
@@ -280,7 +280,7 @@ export function AssetDetailDialog() {
                       size="sm"
                       onClick={handleSubmitReview}
                       disabled={!reviewText.trim() || submittingReview}
-                      className="mt-2 bg-emerald-600 text-white hover:bg-emerald-700"
+                      className="mt-2 bg-purple-600 text-white hover:bg-purple-500 shadow-md shadow-purple-900/30"
                     >
                       {submittingReview ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : null}
                       Post review
@@ -338,14 +338,14 @@ export function AssetDetailDialog() {
                   <Button
                     onClick={handleBook}
                     disabled={!range.from || !range.to || booking}
-                    className="mt-4 w-full gap-2 bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50"
+                    className="mt-4 w-full gap-2 bg-gradient-to-r from-purple-600 to-fuchsia-600 text-white hover:from-purple-500 hover:to-fuchsia-500 shadow-lg shadow-purple-900/40 disabled:opacity-50"
                   >
                     {booking ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
                     {range.from && range.to ? `Reserve · $${total}` : 'Select dates to reserve'}
                   </Button>
 
                   <div className="mt-3 flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
-                    <Shield className="h-3.5 w-3.5 text-emerald-600" />
+                    <Shield className="h-3.5 w-3.5 text-purple-400" />
                     Free cancellation up to 48h before · ${asset.deposit} refundable deposit
                   </div>
                 </div>

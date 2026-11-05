@@ -71,10 +71,10 @@ export function DashboardSection() {
   const past = bookings.filter((b) => !isAfter(new Date(b.endDate), new Date()) || b.status === 'cancelled')
 
   const statCards = [
-    { label: 'Total bookings', value: stats?.totalBookings ?? 0, icon: CalendarDays, color: 'bg-emerald-50 text-emerald-600' },
-    { label: 'Upcoming trips', value: stats?.upcomingBookings ?? 0, icon: Clock, color: 'bg-amber-50 text-amber-600' },
-    { label: 'My listings', value: stats?.activeListings ?? 0, icon: Package, color: 'bg-rose-50 text-rose-600' },
-    { label: 'Total spent', value: `$${stats?.totalSpent ?? 0}`, icon: Wallet, color: 'bg-violet-50 text-violet-600' },
+    { label: 'Total bookings', value: stats?.totalBookings ?? 0, icon: CalendarDays, color: 'bg-purple-950/80 text-purple-400 border border-purple-500/30' },
+    { label: 'Upcoming trips', value: stats?.upcomingBookings ?? 0, icon: Clock, color: 'bg-amber-950/60 text-amber-400 border border-amber-500/30' },
+    { label: 'My listings', value: stats?.activeListings ?? 0, icon: Package, color: 'bg-rose-950/60 text-rose-400 border border-rose-500/30' },
+    { label: 'Total spent', value: `$${stats?.totalSpent ?? 0}`, icon: Wallet, color: 'bg-violet-950/60 text-violet-400 border border-violet-500/30' },
   ]
 
   return (
@@ -86,7 +86,7 @@ export function DashboardSection() {
             Welcome back, {me?.user?.name || 'there'} 👋
           </p>
         </div>
-        <Button onClick={goAddListing} className="gap-2 bg-emerald-600 text-white hover:bg-emerald-700">
+        <Button onClick={goAddListing} className="gap-2 bg-gradient-to-r from-purple-600 to-fuchsia-600 text-white hover:from-purple-500 hover:to-fuchsia-500 shadow-md shadow-purple-900/40">
           <Plus className="h-4 w-4" /> List a new asset
         </Button>
       </div>
@@ -151,7 +151,7 @@ export function DashboardSection() {
                     <div className="relative aspect-[4/3] bg-muted">
                       { }
                       <img src={a.images[0]} alt={a.title} className="h-full w-full object-cover" />
-                      <Badge className="absolute right-2 top-2 bg-emerald-600 text-white hover:bg-emerald-600">
+                      <Badge className="absolute right-2 top-2 bg-purple-600 text-white hover:bg-purple-600 shadow-md">
                         Active
                       </Badge>
                     </div>
@@ -213,7 +213,7 @@ function BookingGroup({
                 </div>
                 <button
                   onClick={() => onOpen(b.asset.id)}
-                  className="mt-1 block truncate text-left font-semibold hover:text-emerald-600"
+                  className="mt-1 block truncate text-left font-semibold hover:text-purple-400"
                 >
                   {b.asset.title}
                 </button>
@@ -248,9 +248,9 @@ function BookingGroup({
 
 function StatusBadge({ status }: { status: string }) {
   const map: Record<string, { label: string; cls: string }> = {
-    confirmed: { label: 'Confirmed', cls: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
-    pending: { label: 'Pending', cls: 'bg-amber-50 text-amber-700 border-amber-200' },
-    cancelled: { label: 'Cancelled', cls: 'bg-rose-50 text-rose-700 border-rose-200' },
+    confirmed: { label: 'Confirmed', cls: 'bg-purple-950/70 text-purple-300 border-purple-500/40' },
+    pending: { label: 'Pending', cls: 'bg-amber-950/60 text-amber-300 border-amber-500/40' },
+    cancelled: { label: 'Cancelled', cls: 'bg-rose-950/60 text-rose-300 border-rose-500/40' },
     completed: { label: 'Completed', cls: 'bg-muted text-muted-foreground' },
   }
   const s = map[status] || map.pending
@@ -277,7 +277,7 @@ function EmptyState({
       </div>
       <h3 className="mt-4 text-lg font-semibold">{title}</h3>
       <p className="mt-1 max-w-sm text-sm text-muted-foreground">{text}</p>
-      <Button onClick={onAction} className="mt-4 gap-2 bg-emerald-600 text-white hover:bg-emerald-700">
+      <Button onClick={onAction} className="mt-4 gap-2 bg-gradient-to-r from-purple-600 to-fuchsia-600 text-white hover:from-purple-500 hover:to-fuchsia-500 shadow-md shadow-purple-900/40">
         <TrendingUp className="h-4 w-4" /> {actionLabel}
       </Button>
     </div>
